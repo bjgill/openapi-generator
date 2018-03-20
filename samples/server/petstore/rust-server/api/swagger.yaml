@@ -54,7 +54,7 @@ paths:
         refName: "Pet"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "ADD_PET"
         consumesXml: true
       responses:
@@ -97,7 +97,7 @@ paths:
         refName: "Pet"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "UPDATE_PET"
         consumesXml: true
       responses:
@@ -476,7 +476,7 @@ paths:
         refName: "Order"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "PLACE_ORDER"
         consumesJson: true
       responses:
@@ -605,7 +605,7 @@ paths:
         refName: "User"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "CREATE_USER"
         consumesJson: true
       responses:
@@ -642,7 +642,7 @@ paths:
             $ref: "#/definitions/User"
         formatString: "{:?}"
         example: "&Vec::new()"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "CREATE_USERS_WITH_ARRAY_INPUT"
         consumesJson: true
       responses:
@@ -678,7 +678,7 @@ paths:
             $ref: "#/definitions/User"
         formatString: "{:?}"
         example: "&Vec::new()"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "CREATE_USERS_WITH_LIST_INPUT"
         consumesJson: true
       responses:
@@ -842,7 +842,7 @@ paths:
         refName: "User"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "UPDATE_USER"
         consumesJson: true
       responses:
@@ -919,7 +919,7 @@ paths:
         refName: "Client"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "TEST_CLASSNAME"
         consumesJson: true
       responses:
@@ -1242,7 +1242,7 @@ paths:
         refName: "Client"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "TEST_CLIENT_MODEL"
         consumesJson: true
       responses:
@@ -1279,7 +1279,7 @@ paths:
         refName: "OuterNumber"
         formatString: "{:?}"
         example: "None"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "FAKE_OUTER_NUMBER_SERIALIZE"
         consumesJson: true
       responses:
@@ -1315,7 +1315,7 @@ paths:
         refName: "OuterString"
         formatString: "{:?}"
         example: "None"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "FAKE_OUTER_STRING_SERIALIZE"
         consumesJson: true
       responses:
@@ -1351,7 +1351,7 @@ paths:
         refName: "OuterBoolean"
         formatString: "{:?}"
         example: "None"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "FAKE_OUTER_BOOLEAN_SERIALIZE"
         consumesJson: true
       responses:
@@ -1387,7 +1387,7 @@ paths:
         refName: "OuterComposite"
         formatString: "{:?}"
         example: "None"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "FAKE_OUTER_COMPOSITE_SERIALIZE"
         consumesJson: true
       responses:
@@ -1442,41 +1442,63 @@ paths:
       PATH_ID: "FAKE_JSONFORMDATA"
       hasPathParams: false
       HttpMethod: "Get"
-  /fake/inline-additionalProperties:
-    post:
-      tags:
-      - "fake"
-      summary: "test inline additionalProperties"
-      description: ""
-      operationId: "testInlineAdditionalProperties"
+  /fake/xmlFeatures:
+    get:
+      summary: "Get some XML"
+      operationId: "getXmlFeatures"
       consumes:
-      - "application/json"
-      parameters:
-      - in: "body"
-        name: "param"
-        description: "request body"
-        required: true
-        schema:
-          type: "object"
-          additionalProperties:
-            type: "string"
-          upperCaseName: "PARAM"
-        refName: null
-        formatString: "{:?}"
-        example: "???"
-        model_key: "OuterBoolean"
-        uppercase_operation_id: "TEST_INLINE_ADDITIONAL_PROPERTIES"
-        consumesJson: true
+      - "application/xml"
+      produces:
+      - "application/xml"
+      parameters: []
       responses:
         200:
-          description: "successful operation"
-          x-responseId: "SuccessfulOperation"
-          x-uppercaseResponseId: "SUCCESSFUL_OPERATION"
-          uppercase_operation_id: "TEST_INLINE_ADDITIONAL_PROPERTIES"
-      operation_id: "test_inline_additional_properties"
-      uppercase_operation_id: "TEST_INLINE_ADDITIONAL_PROPERTIES"
-      path: "/fake/inline-additionalProperties"
-      PATH_ID: "FAKE_INLINE_ADDITIONALPROPERTIES"
+          description: "Success"
+          schema:
+            $ref: "#/definitions/xmlObject"
+          x-responseId: "Success"
+          x-uppercaseResponseId: "SUCCESS"
+          uppercase_operation_id: "GET_XML_FEATURES"
+          uppercase_data_type: "XMLOBJECT"
+          producesXml: true
+          has_namespace: "true"
+      operation_id: "get_xml_features"
+      uppercase_operation_id: "GET_XML_FEATURES"
+      path: "/fake/xmlFeatures"
+      PATH_ID: "FAKE_XMLFEATURES"
+      hasPathParams: false
+      HttpMethod: "Get"
+    post:
+      summary: "Post some xml"
+      operationId: "postXmlFeatures"
+      consumes:
+      - "application/xml"
+      produces:
+      - "application/xml"
+      parameters:
+      - in: "body"
+        name: "xmlObject"
+        required: true
+        schema:
+          $ref: "#/definitions/xmlObject"
+        uppercase_data_type: "XMLOBJECT"
+        refName: "xmlObject"
+        formatString: "{:?}"
+        example: "???"
+        has_namespace: "true"
+        model_key: "itemList"
+        uppercase_operation_id: "POST_XML_FEATURES"
+        consumesXml: true
+      responses:
+        200:
+          description: "Success"
+          x-responseId: "Success"
+          x-uppercaseResponseId: "SUCCESS"
+          uppercase_operation_id: "POST_XML_FEATURES"
+      operation_id: "post_xml_features"
+      uppercase_operation_id: "POST_XML_FEATURES"
+      path: "/fake/xmlFeatures"
+      PATH_ID: "FAKE_XMLFEATURES"
       hasPathParams: false
       HttpMethod: "Post"
       noClientExample: true
@@ -1497,7 +1519,7 @@ paths:
         refName: "User"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "TEST_BODY_WITH_QUERY_PARAMS"
         consumesJson: true
       - name: "query"
@@ -1519,6 +1541,117 @@ paths:
       hasPathParams: false
       HttpMethod: "Put"
       noClientExample: true
+  /fake/plaintext:
+    post:
+      summary: "Post some plaintext"
+      operationId: "postPlainText"
+      consumes:
+      - "text/plain"
+      produces:
+      - "text/plain"
+      parameters:
+      - in: "body"
+        name: "message"
+        required: true
+        schema:
+          type: "string"
+          description: "Plaintext message"
+          upperCaseName: "MESSAGE"
+        refName: null
+        formatString: "\\\"{}\\\""
+        example: "\"message_example\".to_string()"
+        model_key: "itemList"
+        uppercase_operation_id: "POST_PLAIN_TEXT"
+        consumesPlainText: true
+      responses:
+        200:
+          description: "Success"
+          schema:
+            type: "string"
+          x-responseId: "Success"
+          x-uppercaseResponseId: "SUCCESS"
+          uppercase_operation_id: "POST_PLAIN_TEXT"
+          uppercase_data_type: "STRING"
+          producesPlainText: true
+      operation_id: "post_plain_text"
+      uppercase_operation_id: "POST_PLAIN_TEXT"
+      path: "/fake/plaintext"
+      PATH_ID: "FAKE_PLAINTEXT"
+      hasPathParams: false
+      HttpMethod: "Post"
+    put:
+      summary: "Put some optional plaintext"
+      operationId: "putPlainText"
+      consumes:
+      - "text/plain"
+      parameters:
+      - in: "body"
+        name: "message"
+        required: false
+        schema:
+          type: "string"
+          description: "Plaintext message"
+          upperCaseName: "MESSAGE"
+        refName: null
+        formatString: "{:?}"
+        example: "Some(\"message_example\".to_string())"
+        model_key: "itemList"
+        uppercase_operation_id: "PUT_PLAIN_TEXT"
+        consumesPlainText: true
+      responses:
+        200:
+          description: "Success"
+          x-responseId: "Success"
+          x-uppercaseResponseId: "SUCCESS"
+          uppercase_operation_id: "PUT_PLAIN_TEXT"
+      operation_id: "put_plain_text"
+      uppercase_operation_id: "PUT_PLAIN_TEXT"
+      path: "/fake/plaintext"
+      PATH_ID: "FAKE_PLAINTEXT"
+      hasPathParams: false
+      HttpMethod: "Put"
+  /fake/formUrlEncoded:
+    post:
+      summary: "Post some form data in url encoded format"
+      operationId: "postUrlEncodedForm"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "Param1"
+        in: "formData"
+        description: "field1"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"param1_example\".to_string()"
+      - name: "Param2"
+        in: "formData"
+        description: "field2"
+        required: true
+        type: "string"
+        formatString: "\\\"{}\\\""
+        example: "\"param2_example\".to_string()"
+      - name: "Param3"
+        in: "formData"
+        description: "field3"
+        required: false
+        type: "string"
+        formatString: "{:?}"
+        example: "Some(\"param3_example\".to_string())"
+      responses:
+        200:
+          description: "Success"
+          x-responseId: "Success"
+          x-uppercaseResponseId: "SUCCESS"
+          uppercase_operation_id: "POST_URL_ENCODED_FORM"
+      operation_id: "post_url_encoded_form"
+      uppercase_operation_id: "POST_URL_ENCODED_FORM"
+      path: "/fake/formUrlEncoded"
+      PATH_ID: "FAKE_FORMURLENCODED"
+      hasPathParams: false
+      HttpMethod: "Post"
   /another-fake/dummy:
     patch:
       tags:
@@ -1541,7 +1674,7 @@ paths:
         refName: "Client"
         formatString: "{:?}"
         example: "???"
-        model_key: "OuterBoolean"
+        model_key: "itemList"
         uppercase_operation_id: "TEST_SPECIAL_TAGS"
         consumesJson: true
       responses:
@@ -1560,6 +1693,36 @@ paths:
       PATH_ID: "ANOTHER_FAKE_DUMMY"
       hasPathParams: false
       HttpMethod: "Patch"
+      noClientExample: true
+  /uuid-headers/:
+    post:
+      summary: "an endpoint with uuid-type headers"
+      operationId: "UuidHeader"
+      parameters:
+      - name: "X-Uuid-Header"
+        in: "header"
+        required: true
+        type: "string"
+        format: "uuid"
+        formatString: "{:?}"
+        example: "???"
+      responses:
+        200:
+          description: "Success or not found"
+          headers:
+            X-Uuid-Header:
+              type: "string"
+              format: "uuid"
+              description: "SAS correlation header"
+          x-responseId: "SuccessOrNotFound"
+          x-uppercaseResponseId: "SUCCESS_OR_NOT_FOUND"
+          uppercase_operation_id: "UUID_HEADER"
+      operation_id: "uuid_header"
+      uppercase_operation_id: "UUID_HEADER"
+      path: "/uuid-headers/"
+      PATH_ID: "UUID_HEADERS_"
+      hasPathParams: false
+      HttpMethod: "Post"
       noClientExample: true
 securityDefinitions:
   petstore_auth:
@@ -2119,6 +2282,30 @@ definitions:
   OuterBoolean:
     type: "boolean"
     upperCaseName: "OUTERBOOLEAN"
+  xmlObject:
+    required:
+    - "itemList"
+    - "name"
+    properties:
+      name:
+        type: "string"
+        example: "myXmlObject"
+      itemList:
+        $ref: "#/definitions/itemList"
+        itemXmlName: "item"
+    xml:
+      name: "group"
+      namespace: "http://example.com/schema.xsd"
+    upperCaseName: "XMLOBJECT"
+  itemList:
+    type: "array"
+    items:
+      type: "string"
+      example: "my item"
+      xml:
+        name: "item"
+    upperCaseName: "ITEMLIST"
+    itemXmlName: "item"
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"

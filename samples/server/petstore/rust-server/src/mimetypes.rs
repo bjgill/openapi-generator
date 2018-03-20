@@ -8,6 +8,14 @@ pub mod responses {
     lazy_static! {
         pub static ref TEST_SPECIAL_TAGS_SUCCESSFUL_OPERATION: Mime = "application/json".parse().unwrap();
     }
+    /// Create Mime objects for the response content types for GetXmlFeatures
+    lazy_static! {
+        pub static ref GET_XML_FEATURES_SUCCESS: Mime = "application/xml".parse().unwrap();
+    }
+    /// Create Mime objects for the response content types for PostPlainText
+    lazy_static! {
+        pub static ref POST_PLAIN_TEXT_SUCCESS: Mime = "text/plain".parse().unwrap();
+    }
     /// Create Mime objects for the response content types for TestClientModel
     lazy_static! {
         pub static ref TEST_CLIENT_MODEL_SUCCESSFUL_OPERATION: Mime = "application/json".parse().unwrap();
@@ -61,6 +69,22 @@ pub mod requests {
     lazy_static! {
         pub static ref TEST_SPECIAL_TAGS: Mime = "application/json".parse().unwrap();
     }
+   /// Create Mime objects for the request content types for PostPlainText
+    lazy_static! {
+        pub static ref POST_PLAIN_TEXT: Mime = "text/plain".parse().unwrap();
+    }
+   /// Create Mime objects for the request content types for PostUrlEncodedForm
+    lazy_static! {
+        pub static ref POST_URL_ENCODED_FORM: Mime = "application/x-www-form-urlencoded".parse().unwrap();
+    }
+   /// Create Mime objects for the request content types for PostXmlFeatures
+    lazy_static! {
+        pub static ref POST_XML_FEATURES: Mime = "application/xml".parse().unwrap();
+    }
+   /// Create Mime objects for the request content types for PutPlainText
+    lazy_static! {
+        pub static ref PUT_PLAIN_TEXT: Mime = "text/plain".parse().unwrap();
+    }
    /// Create Mime objects for the request content types for FakeOuterBooleanSerialize
     lazy_static! {
         pub static ref FAKE_OUTER_BOOLEAN_SERIALIZE: Mime = "application/json".parse().unwrap();
@@ -92,10 +116,6 @@ pub mod requests {
    /// Create Mime objects for the request content types for TestEnumParameters
     lazy_static! {
         pub static ref TEST_ENUM_PARAMETERS: Mime = "*/*".parse().unwrap();
-    }
-   /// Create Mime objects for the request content types for TestInlineAdditionalProperties
-    lazy_static! {
-        pub static ref TEST_INLINE_ADDITIONAL_PROPERTIES: Mime = "application/json".parse().unwrap();
     }
    /// Create Mime objects for the request content types for TestJsonFormData
     lazy_static! {

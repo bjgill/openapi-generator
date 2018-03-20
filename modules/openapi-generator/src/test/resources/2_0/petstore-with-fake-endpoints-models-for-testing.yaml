@@ -2,7 +2,10 @@ swagger: '2.0'
 info:
   description: "This spec is mainly for testing Petstore server and contains fake endpoints, models. Please do not use this for any other purpose. Special characters: \" \\"
   version: 1.0.0
-  title: OpenAPI Petstore
+  title: Swagger Petstore
+  termsOfService: 'http://swagger.io/terms/'
+  contact:
+    email: apiteam@swagger.io
   license:
     name: Apache-2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -11,10 +14,16 @@ basePath: /v2
 tags:
   - name: pet
     description: Everything about your Pets
+    externalDocs:
+      description: Find out more
+      url: 'http://swagger.io'
   - name: store
     description: Access to Petstore orders
   - name: user
     description: Operations about user
+    externalDocs:
+      description: Find out more about our store
+      url: 'http://swagger.io'
 schemes:
   - http
 paths:
@@ -606,7 +615,9 @@ paths:
       description: To test enum parameters
       operationId: testEnumParameters
       consumes:
-        - "application/x-www-form-urlencoded"
+        - "*/*"
+      produces:
+        - "*/*"
       parameters:
         - name: enum_form_string_array
           type: array
@@ -679,7 +690,7 @@ paths:
           enum:
             - 1.1
             - -1.2
-          in: query
+          in: formData
           description: Query parameter enum test (double)
       responses:
         '400':
@@ -701,7 +712,11 @@ paths:
         가짜 엔드 포인트
       operationId: testEndpointParameters
       consumes:
-        - application/x-www-form-urlencoded
+        - application/xml; charset=utf-8
+        - application/json; charset=utf-8
+      produces:
+        - application/xml; charset=utf-8
+        - application/json; charset=utf-8
       parameters:
         - name: integer
           type: integer
@@ -868,7 +883,7 @@ paths:
       description: ''
       operationId: testJsonFormData
       consumes:
-        - application/x-www-form-urlencoded
+        - application/json
       parameters:
         - name: param
           in: formData
@@ -883,27 +898,35 @@ paths:
       responses:
         '200':
           description: successful operation
-  /fake/inline-additionalProperties:
-    post:
-      tags:
-        - fake
-      summary: test inline additionalProperties
-      description: ''
-      operationId: testInlineAdditionalProperties
+  /fake/xmlFeatures:
+    get:
+      summary: Get some XML
+      operationId: getXmlFeatures
+      produces:
+        - application/xml
       consumes:
-        - application/json
+        - application/xml
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: '#/definitions/xmlObject'
+    post:
       parameters:
-        - name: param
+        - name: xmlObject
           in: body
-          description: request body
           required: true
           schema:
-            type: object
-            additionalProperties:
-              type: string
+            $ref: '#/definitions/xmlObject'
+      summary: Post some xml
+      operationId: postXmlFeatures
+      produces:
+        - application/xml
+      consumes:
+        - application/xml
       responses:
-        '200':
-          description: successful operation
+        200:
+          description: Success
   /fake/body-with-query-params:
     put:
       tags:
@@ -924,6 +947,69 @@ paths:
       responses:
         '200':
           description: Success
+  /fake/plaintext:
+    post:
+      parameters:
+        - name: message
+          in: body
+          required: true
+          schema:
+            type: string
+            description: Plaintext message
+      summary: Post some plaintext
+      operationId: postPlainText
+      produces:
+        - text/plain
+      consumes:
+        - text/plain
+      responses:
+        200:
+          description: Success
+          schema:
+            type: string
+    put:
+      parameters:
+        - name: message
+          in: body
+          required: false
+          schema:
+            type: string
+            description: Plaintext message
+      summary: Put some optional plaintext
+      operationId: putPlainText
+      consumes:
+        - text/plain
+      responses:
+        200:
+          description: Success
+  /fake/formUrlEncoded:
+    post:
+      parameters:
+        - name: Param1
+          in: formData
+          required: true
+          description: field1
+          type: string
+        - name: Param2
+          in: formData
+          required: true
+          description: field2
+          type: string
+        - name: Param3
+          in: formData
+          required: false
+          description: field3
+          type: string
+      summary: Post some form data in url encoded format
+      operationId: postUrlEncodedForm
+      produces:
+        - text/plain
+      consumes:
+        - application/x-www-form-urlencoded
+      responses:
+        200:
+          description: Success
+
   /another-fake/dummy:
     patch:
       tags:
@@ -947,6 +1033,25 @@ paths:
           description: successful operation
           schema:
             $ref: '#/definitions/Client'
+  /uuid-headers/:
+    post:
+      summary: an endpoint with uuid-type headers
+      operationId: UuidHeader
+      parameters:
+        - name: X-Uuid-Header
+          in: header
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success or not found
+          headers:
+            X-Uuid-Header:
+              type: string
+              format: uuid
+              description: SAS correlation header
+
 securityDefinitions:
   petstore_auth:
     type: oauth2
@@ -1451,4 +1556,31 @@ definitions:
     type: string
   OuterBoolean:
     type: boolean
-    x-codegen-body-parameter-name: boolean_post_body
+
+  xmlObject:
+    required:
+      - name
+      - itemList
+    xml:
+      name: group
+      namespace: 'http://example.com/schema.xsd'
+    properties:
+      name:
+        type: string
+        example: myXmlObject
+      itemList:
+        $ref: '#/definitions/itemList'
+
+  itemList:
+    type: array
+    xml:
+      wrapped: true
+    items:
+      xml:
+        name: "item"
+      type: string
+      example: my item
+
+externalDocs:
+  description: Find out more about Swagger
+  url: 'http://swagger.io'

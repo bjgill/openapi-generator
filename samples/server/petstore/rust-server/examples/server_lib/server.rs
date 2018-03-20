@@ -8,12 +8,18 @@ use futures::Stream;
 use std::collections::HashMap;
 use std::io::Error;
 use std::marker::PhantomData;
-
+use uuid;
 use swagger;
 use swagger::{Has, XSpanIdString};
 
 use petstore_api::{Api, ApiError,
                       TestSpecialTagsResponse,
+                      GetXmlFeaturesResponse,
+                      PostPlainTextResponse,
+                      PostUrlEncodedFormResponse,
+                      PostXmlFeaturesResponse,
+                      PutPlainTextResponse,
+                      UuidHeaderResponse,
                       FakeOuterBooleanSerializeResponse,
                       FakeOuterCompositeSerializeResponse,
                       FakeOuterNumberSerializeResponse,
@@ -22,7 +28,6 @@ use petstore_api::{Api, ApiError,
                       TestClientModelResponse,
                       TestEndpointParametersResponse,
                       TestEnumParametersResponse,
-                      TestInlineAdditionalPropertiesResponse,
                       TestJsonFormDataResponse,
                       TestClassnameResponse,
                       AddPetResponse,
@@ -65,6 +70,48 @@ impl<C> Api<C> for Server<C> where C: Has<XSpanIdString>{
     fn test_special_tags(&self, body: models::Client, context: &C) -> Box<Future<Item=TestSpecialTagsResponse, Error=ApiError>> {
         let context = context.clone();
         println!("test_special_tags({:?}) - X-Span-ID: {:?}", body, context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
+
+    /// Get some XML
+    fn get_xml_features(&self, context: &C) -> Box<Future<Item=GetXmlFeaturesResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("get_xml_features() - X-Span-ID: {:?}", context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
+
+    /// Post some plaintext
+    fn post_plain_text(&self, message: String, context: &C) -> Box<Future<Item=PostPlainTextResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("post_plain_text(\"{}\") - X-Span-ID: {:?}", message, context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
+
+    /// Post some form data in url encoded format
+    fn post_url_encoded_form(&self, param1: String, param2: String, param3: Option<String>, context: &C) -> Box<Future<Item=PostUrlEncodedFormResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("post_url_encoded_form(\"{}\", \"{}\", {:?}) - X-Span-ID: {:?}", param1, param2, param3, context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
+
+    /// Post some xml
+    fn post_xml_features(&self, xml_object: models::XmlObject, context: &C) -> Box<Future<Item=PostXmlFeaturesResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("post_xml_features({:?}) - X-Span-ID: {:?}", xml_object, context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
+
+    /// Put some optional plaintext
+    fn put_plain_text(&self, message: Option<String>, context: &C) -> Box<Future<Item=PutPlainTextResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("put_plain_text({:?}) - X-Span-ID: {:?}", message, context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
+
+    /// an endpoint with uuid-type headers
+    fn uuid_header(&self, x_uuid_header: uuid::Uuid, context: &C) -> Box<Future<Item=UuidHeaderResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("uuid_header({:?}) - X-Span-ID: {:?}", x_uuid_header, context.get().0.clone());
         Box::new(futures::failed("Generic failure".into()))
     }
 
@@ -121,13 +168,6 @@ impl<C> Api<C> for Server<C> where C: Has<XSpanIdString>{
     fn test_enum_parameters(&self, enum_form_string_array: Option<&Vec<String>>, enum_form_string: Option<String>, enum_header_string_array: Option<&Vec<String>>, enum_header_string: Option<String>, enum_query_string_array: Option<&Vec<String>>, enum_query_string: Option<String>, enum_query_integer: Option<i32>, enum_query_double: Option<f64>, context: &C) -> Box<Future<Item=TestEnumParametersResponse, Error=ApiError>> {
         let context = context.clone();
         println!("test_enum_parameters({:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}", enum_form_string_array, enum_form_string, enum_header_string_array, enum_header_string, enum_query_string_array, enum_query_string, enum_query_integer, enum_query_double, context.get().0.clone());
-        Box::new(futures::failed("Generic failure".into()))
-    }
-
-    /// test inline additionalProperties
-    fn test_inline_additional_properties(&self, param: object, context: &C) -> Box<Future<Item=TestInlineAdditionalPropertiesResponse, Error=ApiError>> {
-        let context = context.clone();
-        println!("test_inline_additional_properties({:?}) - X-Span-ID: {:?}", param, context.get().0.clone());
         Box::new(futures::failed("Generic failure".into()))
     }
 

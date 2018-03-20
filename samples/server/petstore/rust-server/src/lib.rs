@@ -3,7 +3,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-
+extern crate uuid;
 extern crate serde_xml_rs;
 extern crate futures;
 extern crate chrono;
@@ -40,6 +40,42 @@ pub const API_VERSION: &'static str = "1.0.0";
 pub enum TestSpecialTagsResponse {
     /// successful operation
     SuccessfulOperation ( models::Client ) ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum GetXmlFeaturesResponse {
+    /// Success
+    Success ( models::XmlObject ) ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PostPlainTextResponse {
+    /// Success
+    Success ( String ) ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PostUrlEncodedFormResponse {
+    /// Success
+    Success ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PostXmlFeaturesResponse {
+    /// Success
+    Success ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PutPlainTextResponse {
+    /// Success
+    Success ,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum UuidHeaderResponse {
+    /// Success or not found
+    SuccessOrNotFound  { x_uuid_header: uuid::Uuid } ,
 }
 
 #[derive(Debug, PartialEq)]
@@ -92,12 +128,6 @@ pub enum TestEnumParametersResponse {
     InvalidRequest ,
     /// Not found
     NotFound ,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum TestInlineAdditionalPropertiesResponse {
-    /// successful operation
-    SuccessfulOperation ,
 }
 
 #[derive(Debug, PartialEq)]
@@ -269,6 +299,24 @@ pub trait Api<C> {
     /// To test special tags
     fn test_special_tags(&self, body: models::Client, context: &C) -> Box<Future<Item=TestSpecialTagsResponse, Error=ApiError>>;
 
+    /// Get some XML
+    fn get_xml_features(&self, context: &C) -> Box<Future<Item=GetXmlFeaturesResponse, Error=ApiError>>;
+
+    /// Post some plaintext
+    fn post_plain_text(&self, message: String, context: &C) -> Box<Future<Item=PostPlainTextResponse, Error=ApiError>>;
+
+    /// Post some form data in url encoded format
+    fn post_url_encoded_form(&self, param1: String, param2: String, param3: Option<String>, context: &C) -> Box<Future<Item=PostUrlEncodedFormResponse, Error=ApiError>>;
+
+    /// Post some xml
+    fn post_xml_features(&self, xml_object: models::XmlObject, context: &C) -> Box<Future<Item=PostXmlFeaturesResponse, Error=ApiError>>;
+
+    /// Put some optional plaintext
+    fn put_plain_text(&self, message: Option<String>, context: &C) -> Box<Future<Item=PutPlainTextResponse, Error=ApiError>>;
+
+    /// an endpoint with uuid-type headers
+    fn uuid_header(&self, x_uuid_header: uuid::Uuid, context: &C) -> Box<Future<Item=UuidHeaderResponse, Error=ApiError>>;
+
 
     fn fake_outer_boolean_serialize(&self, body: Option<models::OuterBoolean>, context: &C) -> Box<Future<Item=FakeOuterBooleanSerializeResponse, Error=ApiError>>;
 
@@ -292,9 +340,6 @@ pub trait Api<C> {
 
     /// To test enum parameters
     fn test_enum_parameters(&self, enum_form_string_array: Option<&Vec<String>>, enum_form_string: Option<String>, enum_header_string_array: Option<&Vec<String>>, enum_header_string: Option<String>, enum_query_string_array: Option<&Vec<String>>, enum_query_string: Option<String>, enum_query_integer: Option<i32>, enum_query_double: Option<f64>, context: &C) -> Box<Future<Item=TestEnumParametersResponse, Error=ApiError>>;
-
-    /// test inline additionalProperties
-    fn test_inline_additional_properties(&self, param: object, context: &C) -> Box<Future<Item=TestInlineAdditionalPropertiesResponse, Error=ApiError>>;
 
     /// test json serialization of form data
     fn test_json_form_data(&self, param: String, param2: String, context: &C) -> Box<Future<Item=TestJsonFormDataResponse, Error=ApiError>>;
@@ -370,6 +415,24 @@ pub trait ApiNoContext {
     /// To test special tags
     fn test_special_tags(&self, body: models::Client) -> Box<Future<Item=TestSpecialTagsResponse, Error=ApiError>>;
 
+    /// Get some XML
+    fn get_xml_features(&self) -> Box<Future<Item=GetXmlFeaturesResponse, Error=ApiError>>;
+
+    /// Post some plaintext
+    fn post_plain_text(&self, message: String) -> Box<Future<Item=PostPlainTextResponse, Error=ApiError>>;
+
+    /// Post some form data in url encoded format
+    fn post_url_encoded_form(&self, param1: String, param2: String, param3: Option<String>) -> Box<Future<Item=PostUrlEncodedFormResponse, Error=ApiError>>;
+
+    /// Post some xml
+    fn post_xml_features(&self, xml_object: models::XmlObject) -> Box<Future<Item=PostXmlFeaturesResponse, Error=ApiError>>;
+
+    /// Put some optional plaintext
+    fn put_plain_text(&self, message: Option<String>) -> Box<Future<Item=PutPlainTextResponse, Error=ApiError>>;
+
+    /// an endpoint with uuid-type headers
+    fn uuid_header(&self, x_uuid_header: uuid::Uuid) -> Box<Future<Item=UuidHeaderResponse, Error=ApiError>>;
+
 
     fn fake_outer_boolean_serialize(&self, body: Option<models::OuterBoolean>) -> Box<Future<Item=FakeOuterBooleanSerializeResponse, Error=ApiError>>;
 
@@ -393,9 +456,6 @@ pub trait ApiNoContext {
 
     /// To test enum parameters
     fn test_enum_parameters(&self, enum_form_string_array: Option<&Vec<String>>, enum_form_string: Option<String>, enum_header_string_array: Option<&Vec<String>>, enum_header_string: Option<String>, enum_query_string_array: Option<&Vec<String>>, enum_query_string: Option<String>, enum_query_integer: Option<i32>, enum_query_double: Option<f64>) -> Box<Future<Item=TestEnumParametersResponse, Error=ApiError>>;
-
-    /// test inline additionalProperties
-    fn test_inline_additional_properties(&self, param: object) -> Box<Future<Item=TestInlineAdditionalPropertiesResponse, Error=ApiError>>;
 
     /// test json serialization of form data
     fn test_json_form_data(&self, param: String, param2: String) -> Box<Future<Item=TestJsonFormDataResponse, Error=ApiError>>;
@@ -484,6 +544,36 @@ impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
         self.api().test_special_tags(body, &self.context())
     }
 
+    /// Get some XML
+    fn get_xml_features(&self) -> Box<Future<Item=GetXmlFeaturesResponse, Error=ApiError>> {
+        self.api().get_xml_features(&self.context())
+    }
+
+    /// Post some plaintext
+    fn post_plain_text(&self, message: String) -> Box<Future<Item=PostPlainTextResponse, Error=ApiError>> {
+        self.api().post_plain_text(message, &self.context())
+    }
+
+    /// Post some form data in url encoded format
+    fn post_url_encoded_form(&self, param1: String, param2: String, param3: Option<String>) -> Box<Future<Item=PostUrlEncodedFormResponse, Error=ApiError>> {
+        self.api().post_url_encoded_form(param1, param2, param3, &self.context())
+    }
+
+    /// Post some xml
+    fn post_xml_features(&self, xml_object: models::XmlObject) -> Box<Future<Item=PostXmlFeaturesResponse, Error=ApiError>> {
+        self.api().post_xml_features(xml_object, &self.context())
+    }
+
+    /// Put some optional plaintext
+    fn put_plain_text(&self, message: Option<String>) -> Box<Future<Item=PutPlainTextResponse, Error=ApiError>> {
+        self.api().put_plain_text(message, &self.context())
+    }
+
+    /// an endpoint with uuid-type headers
+    fn uuid_header(&self, x_uuid_header: uuid::Uuid) -> Box<Future<Item=UuidHeaderResponse, Error=ApiError>> {
+        self.api().uuid_header(x_uuid_header, &self.context())
+    }
+
 
     fn fake_outer_boolean_serialize(&self, body: Option<models::OuterBoolean>) -> Box<Future<Item=FakeOuterBooleanSerializeResponse, Error=ApiError>> {
         self.api().fake_outer_boolean_serialize(body, &self.context())
@@ -522,11 +612,6 @@ impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
     /// To test enum parameters
     fn test_enum_parameters(&self, enum_form_string_array: Option<&Vec<String>>, enum_form_string: Option<String>, enum_header_string_array: Option<&Vec<String>>, enum_header_string: Option<String>, enum_query_string_array: Option<&Vec<String>>, enum_query_string: Option<String>, enum_query_integer: Option<i32>, enum_query_double: Option<f64>) -> Box<Future<Item=TestEnumParametersResponse, Error=ApiError>> {
         self.api().test_enum_parameters(enum_form_string_array, enum_form_string, enum_header_string_array, enum_header_string, enum_query_string_array, enum_query_string, enum_query_integer, enum_query_double, &self.context())
-    }
-
-    /// test inline additionalProperties
-    fn test_inline_additional_properties(&self, param: object) -> Box<Future<Item=TestInlineAdditionalPropertiesResponse, Error=ApiError>> {
-        self.api().test_inline_additional_properties(param, &self.context())
     }
 
     /// test json serialization of form data
