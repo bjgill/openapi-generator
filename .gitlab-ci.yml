@@ -1,0 +1,75 @@
+stages:
+  - build
+  - test_codegen
+  - verify_sample
+
+variables:
+  CONTAINER_IMAGE: $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
+  ARTIFACTORY_REGISTRY: artifactory.metaswitch.com:6555
+  ARTIFACTORY_IMAGE: $ARTIFACTORY_REGISTRY/$CI_PROJECT_PATH/$CI_BUILD_REF_SLUG
+  DOCKER_DRIVER: overlay
+
+.docker_template: &docker
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker login -u gitlab-ci-token -p $ARTIFACTORY_TOKEN $ARTIFACTORY_REGISTRY
+
+.sample_template: &sample_image
+  image: $ARTIFACTORY_REGISTRY/images.core/rust-dev:1.0.5
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+
+.rust_template: &rust
+  image: $ARTIFACTORY_REGISTRY/images.core/rust-dev:1.0.5
+  before_script:
+    # Add the SSH key stored in CI variable to the agent store,
+    # to enable read-only SSH access to other GitLab repos.
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$GIT_CI_PULL_KEY")
+
+build:
+  # Builds Docker container.  The Dockerfile builds the source code into a jar file.
+  stage: build
+  <<: *docker
+  script:
+    - apk add --no-cache bash
+    - bash run-in-docker-headless.sh mvn package
+    - docker build --pull -t $CONTAINER_IMAGE ./modules/swagger-codegen-cli
+    # Login again in case our before_script login timed out, as the build does take a while
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker push $CONTAINER_IMAGE
+    - docker tag $CONTAINER_IMAGE $ARTIFACTORY_IMAGE
+    - docker push $ARTIFACTORY_IMAGE
+    - docker tag $CONTAINER_IMAGE $ARTIFACTORY_IMAGE:$CI_JOB_ID
+    - docker push $ARTIFACTORY_IMAGE:$CI_JOB_ID
+
+sample_up_to_date:
+  # Check that the sample is up to date.
+  stage: verify_sample
+  <<: *sample_image
+  script:
+    # Override the sample by running the command from the ./bin/rust-server-petstore.sh script.
+    - docker run -v $(pwd):$(pwd) -w $(pwd) $CONTAINER_IMAGE generate -t modules/swagger-codegen/src/main/resources/rust-server -i modules/swagger-codegen/src/test/resources/2_0/petstore-with-fake-endpoints-models-for-testing.yaml -l rust-server -o samples/server/petstore/rust-server -DpackageName=petstore_api
+    # The generated readme includes a build date. Thus, we need to exclude it from the comparison.
+    # The are some changes in the api/swagger.yaml file that appear due to different java versions - docker uses openJDK 1.7.
+    # The .swagger-codegen directory contains meta information that can change as Swagger itself is updated.
+    # The important thing to check is the code, as the yaml is not intended for testing.
+    - git checkout -- samples/server/petstore/rust-server/README.md samples/server/petstore/rust-server/api/swagger.yaml samples/server/petstore/rust-server/.swagger-codegen
+    - git diff --exit-code
+
+sample_tests:
+  # Test building the generated Rust code
+  stage: verify_sample
+  <<: *rust
+  script:
+    - cd samples/server/petstore/rust-server
+    - cargo build
+    - cargo build --example client
+    - cargo build --example server
+    - cargo test
+    - cargo doc
