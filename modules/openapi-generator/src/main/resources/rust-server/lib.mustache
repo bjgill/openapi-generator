@@ -11,6 +11,7 @@ extern crate chrono;
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+extern crate semver;
 
 // Logically this should be in the client and server modules, but rust doesn't allow `macro_use` from a module.
 #[cfg(any(feature = "client", feature = "server"))]
@@ -30,10 +31,12 @@ pub use futures::Future;
 #[cfg(any(feature = "client", feature = "server"))]
 mod mimetypes;
 
-pub use swagger::{ApiError, ContextWrapper};
+pub use swagger::{ApiError, Context, ContextWrapper};
 
 pub const BASE_PATH: &'static str = "{{basePathWithoutHost}}";
-pub const API_VERSION: &'static str = "{{appVersion}}";
+lazy_static! {
+    pub static ref API_VERSION: Result<semver::Version, semver::SemVerError> = semver::Version::parse("{{apiVersion}}");
+}
 
 {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
 {{^isResponseFile}}
@@ -42,16 +45,16 @@ pub const API_VERSION: &'static str = "{{appVersion}}";
 pub enum {{operationId}}Response {
 {{#responses}}
 {{#message}}    /// {{message}}{{/message}}
-    {{#vendorExtensions}}{{x-responseId}}{{/vendorExtensions}} {{#dataType}}{{^headers}}( {{{dataType}}} ) {{/headers}}{{#headers}}{{#-first}}{ body: {{{dataType}}}{{/-first}}{{/headers}}{{/dataType}}{{#headers}}{{#-first}}{{^dataType}} { {{/dataType}}{{#dataType}}, {{/dataType}}{{/-first}}{{^-first}}, {{/-first}}{{name}}: {{{dataType}}}{{#-last}} } {{/-last}}{{/headers}},
+    {{#vendorExtensions}}{{x-responseId}}{{/vendorExtensions}} {{#dataType}}{{^headers}}( {{{dataType}}} ) {{/headers}}{{#headers}}{{#-first}}{ body: {{{dataType}}}{{/-first}}{{/headers}}{{/dataType}}{{#headers}}{{#-first}}{{^dataType}} { {{/dataType}}{{#dataType}}, {{/dataType}}{{/-first}}{{^-first}}, {{/-first}}{{name}}: {{{datatype}}}{{#-last}} } {{/-last}}{{/headers}},
 {{/responses}}
 }
 {{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
 
 /// API
-pub trait Api<C> {
+pub trait Api {
 {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
 {{#summary}}    /// {{{summary}}}{{/summary}}
-    fn {{#vendorExtensions}}{{operation_id}}{{/vendorExtensions}}(&self{{#allParams}}, {{paramName}}: {{^required}}{{#isFile}}Box<Future<Item={{/isFile}}Option<{{/required}}{{#isListContainer}}&{{/isListContainer}}{{{dataType}}}{{^required}}>{{#isFile}}, Error=Error> + Send>{{/isFile}}{{/required}}{{/allParams}}, context: &C) -> Box<Future<Item={{operationId}}Response, Error=ApiError>>;
+    fn {{#vendorExtensions}}{{operation_id}}{{/vendorExtensions}}(&self{{#allParams}}, {{paramName}}: {{^required}}{{#isFile}}Box<Future<Item={{/isFile}}Option<{{/required}}{{#isListContainer}}&{{/isListContainer}}{{{dataType}}}{{^required}}>{{#isFile}}, Error=Error> + Send>{{/isFile}}{{/required}}{{/allParams}}, context: &Context) -> Box<Future<Item={{operationId}}Response, Error=ApiError>>;
 {{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
 }
 
@@ -64,18 +67,18 @@ pub trait ApiNoContext {
 }
 
 /// Trait to extend an API to make it easy to bind it to a context.
-pub trait ContextWrapperExt<'a, C> where Self: Sized {
+pub trait ContextWrapperExt<'a> where Self: Sized {
     /// Binds this API to a context.
-    fn with_context(self: &'a Self, context: C) -> ContextWrapper<'a, Self, C>;
+    fn with_context(self: &'a Self, context: Context) -> ContextWrapper<'a, Self>;
 }
 
-impl<'a, T: Api<C> + Sized, C> ContextWrapperExt<'a, C> for T {
-    fn with_context(self: &'a T, context: C) -> ContextWrapper<'a, T, C> {
-         ContextWrapper::<T, C>::new(self, context)
+impl<'a, T: Api + Sized> ContextWrapperExt<'a> for T {
+    fn with_context(self: &'a T, context: Context) -> ContextWrapper<'a, T> {
+         ContextWrapper::<T>::new(self, context)
     }
 }
 
-impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
+impl<'a, T: Api> ApiNoContext for ContextWrapper<'a, T> {
 {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
 {{#summary}}    /// {{{summary}}}{{/summary}}
     fn {{#vendorExtensions}}{{operation_id}}{{/vendorExtensions}}(&self{{#allParams}}, {{paramName}}: {{^required}}{{#isFile}}Box<Future<Item={{/isFile}}Option<{{/required}}{{#isListContainer}}&{{/isListContainer}}{{{dataType}}}{{^required}}>{{#isFile}}, Error=Error> + Send>{{/isFile}}{{/required}}{{/allParams}}) -> Box<Future<Item={{operationId}}Response, Error=ApiError>> {
