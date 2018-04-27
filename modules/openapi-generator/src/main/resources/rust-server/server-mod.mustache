@@ -467,7 +467,7 @@ fn multipart_boundary<'a>(headers: &'a Headers) -> Option<&'a str> {
 pub struct ApiRequestParser;
 
 impl RequestParser for ApiRequestParser {
-    fn get_operation(request: &Request) -> Result<&'static str, ()> {
+    fn parse_operation_id(request: &Request) -> Result<&'static str, ()> {
         let path = paths::GLOBAL_REGEX_SET.matches(request.uri().path());
         match request.method() {
 {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
