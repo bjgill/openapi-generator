@@ -3325,9 +3325,6 @@ impl RequestParser for ApiRequestParser {
             // PutPlainText - PUT /fake/plaintext
             &hyper::Method::Put if path.matched(paths::ID_FAKE_PLAINTEXT) => Ok("PutPlainText"),
 
-            // TestBodyWithQueryParams - PUT /fake/body-with-query-params
-            &hyper::Method::Put if path.matched(paths::ID_FAKE_BODY_WITH_QUERY_PARAMS) => Ok("TestBodyWithQueryParams"),
-
             // UuidHeader - POST /uuid-headers/
             &hyper::Method::Post if path.matched(paths::ID_UUID_HEADERS_) => Ok("UuidHeader"),
 
@@ -3342,6 +3339,9 @@ impl RequestParser for ApiRequestParser {
 
             // FakeOuterStringSerialize - POST /fake/outer/string
             &hyper::Method::Post if path.matched(paths::ID_FAKE_OUTER_STRING) => Ok("FakeOuterStringSerialize"),
+
+            // TestBodyWithQueryParams - PUT /fake/body-with-query-params
+            &hyper::Method::Put if path.matched(paths::ID_FAKE_BODY_WITH_QUERY_PARAMS) => Ok("TestBodyWithQueryParams"),
 
             // TestClientModel - PATCH /fake
             &hyper::Method::Patch if path.matched(paths::ID_FAKE) => Ok("TestClientModel"),
