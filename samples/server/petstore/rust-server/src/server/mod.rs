@@ -38,6 +38,7 @@ use std::collections::BTreeSet;
 pub use swagger::auth::Authorization;
 use swagger::{ApiError, XSpanId, XSpanIdString, Has, RequestParser};
 use swagger::auth::Scopes;
+use swagger::context::SwaggerService;
 
 use {Api,
      TestSpecialTagsResponse,
@@ -81,7 +82,7 @@ use {Api,
 #[allow(unused_imports)]
 use models;
 
-pub mod auth;
+pub mod context;
 
 header! { (Warning, "Warning") => [String] }
 
@@ -3418,6 +3419,26 @@ impl RequestParser for ApiRequestParser {
             // UpdateUser - PUT /user/{username}
             &hyper::Method::Put if path.matched(paths::ID_USER_USERNAME) => Ok("UpdateUser"),
             _ => Err(()),
+        }
+    }
+}
+
+impl<T, C> SwaggerService<C> for Service<T, C>
+where
+    T: Api<C> + Clone + 'static,
+    C: Has<XSpanIdString> + Clone + 'static
+{
+}
+
+impl<T, C> Clone for Service<T, C>
+where
+    T: Api<C> + Clone + 'static,
+    C: Has<XSpanIdString> + Clone + 'static
+{
+    fn clone(&self) -> Self {
+        Service {
+            api_impl: self.api_impl.clone(),
+            marker: self.marker.clone(),
         }
     }
 }
