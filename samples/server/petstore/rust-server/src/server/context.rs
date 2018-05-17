@@ -41,7 +41,7 @@ impl<T, A, B, C, D> hyper::server::NewService for NewAddContext<T, A>
     type Error = Error;
     type Instance = AddContext<T::Instance, A>;
 
-    fn new_service(&self) -> Result<Self::Instance, io::Error> {rm 
+    fn new_service(&self) -> Result<Self::Instance, io::Error> {
         self.inner.new_service().map(|s| AddContext::new(s))
     }
 }
@@ -88,6 +88,7 @@ impl<T, A, B, C, D> hyper::server::Service for AddContext<T, A>
             if let Some(header) = req.headers().get::<ApiKey1>().cloned() {
                 let auth_data = AuthData::ApiKey(header.0);
                 let context = context.push(Some(auth_data));
+                let context = context.push(None::<Authorization>);
                 return self.inner.call((req, context));
             }
         }
@@ -104,9 +105,9 @@ impl<T, A, B, C, D> hyper::server::Service for AddContext<T, A>
             }
         }
         {
-            use hyper::header::{Authorization, Basic, Bearer};
+            use hyper::header::{Authorization as HyperAuth, Basic, Bearer};
             use std::ops::Deref;
-            if let Some(basic) = req.headers().get::<Authorization<Basic>>().cloned() {
+            if let Some(basic) = req.headers().get::<HyperAuth<Basic>>().cloned() {
                 let auth_data = AuthData::Basic(basic.deref().clone());
                 let context = context.push(Some(auth_data));
                 let context = context.push(None::<Authorization>);
@@ -114,9 +115,9 @@ impl<T, A, B, C, D> hyper::server::Service for AddContext<T, A>
             }
         }
         {
-            use hyper::header::{Authorization, Basic, Bearer};
+            use hyper::header::{Authorization as HyperAuth, Basic, Bearer};
             use std::ops::Deref;
-            if let Some(bearer) = req.headers().get::<Authorization<Bearer>>().cloned() {
+            if let Some(basic) = req.headers().get::<HyperAuth<Basic>>().cloned() {
                 let auth_data = AuthData::Bearer(bearer.deref().clone());
                 let context = context.push(Some(auth_data));
                 let context = context.push(None::<Authorization>);
