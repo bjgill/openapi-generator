@@ -240,13 +240,14 @@ impl Client<hyper::client::FutureResponse> {
     /// This is not a recommended way to write new tests. If other reasons are found for using this function, they
     /// should be mentioned here.
     #[deprecated(note="Use try_new_with_client_service instead")]
-    pub fn try_new_with_hyper_client(client_service: Arc<Box<hyper::client::Service<Request=hyper::Request<hyper::Body>, Response=hyper::Response, Error=hyper::Error, Future=hyper::client::FutureResponse>>>,
-                                       handle: Handle,
-                                       base_path: &str)
-                                    -> Result<Client<hyper::client::FutureResponse>, ClientInitError>
+    pub fn try_new_with_hyper_client(
+        hyper_client: Arc<Box<hyper::client::Service<Request=hyper::Request<hyper::Body>, Response=hyper::Response, Error=hyper::Error, Future=hyper::client::FutureResponse>>>,
+        handle: Handle,
+        base_path: &str
+    ) -> Result<Client<hyper::client::FutureResponse>, ClientInitError>
     {
         Ok(Client {
-            client_service: client_service,
+            client_service: hyper_client,
             base_path: into_base_path(base_path, None)?,
         })
     }
