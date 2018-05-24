@@ -37,8 +37,6 @@ use std::collections::BTreeSet;
 
 pub use swagger::auth::Authorization;
 use swagger::{ApiError, XSpanId, XSpanIdString, Has, RequestParser};
-use swagger::auth::Scopes;
-use swagger::context::SwaggerService;
 
 use {Api,
      TestSpecialTagsResponse,
@@ -3423,17 +3421,7 @@ impl RequestParser for ApiRequestParser {
     }
 }
 
-impl<T, C> SwaggerService<C> for Service<T, C>
-where
-    T: Api<C> + Clone + 'static,
-    C: Has<XSpanIdString> + Clone + 'static
-{
-}
-
 impl<T, C> Clone for Service<T, C>
-where
-    T: Api<C> + Clone + 'static,
-    C: Has<XSpanIdString> + Clone + 'static
 {
     fn clone(&self) -> Self {
         Service {
