@@ -117,7 +117,7 @@ impl<T, A, B, C, D> hyper::server::Service for AddContext<T, A>
         {
             use hyper::header::{Authorization as HyperAuth, Basic, Bearer};
             use std::ops::Deref;
-            if let Some(bearer) = req.headers().get::<HyperAuth<Basic>>().cloned() {
+            if let Some(bearer) = req.headers().get::<HyperAuth<Bearer>>().cloned() {
                 let auth_data = AuthData::Bearer(bearer.deref().clone());
                 let context = context.push(Some(auth_data));
                 let context = context.push(None::<Authorization>);
