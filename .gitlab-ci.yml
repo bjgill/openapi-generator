@@ -64,6 +64,7 @@ sample_up_to_date:
 
 sample_tests:
   # Test building the generated Rust code
+  # As above, this tests petstore-with-fake-endpoints-models-for-testing.yaml not petstore.yaml
   stage: verify_sample
   <<: *rust
   script:

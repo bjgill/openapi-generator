@@ -47,6 +47,7 @@ use petstore_api::{ApiNoContext, ContextWrapperExt,
                       DeleteOrderResponse,
                       GetInventoryResponse,
                       GetOrderByIdResponse,
+                      GetStoreFileResponse,
                       PlaceOrderResponse,
                       CreateUserResponse,
                       CreateUsersWithArrayInputResponse,
@@ -84,6 +85,7 @@ fn main() {
     "DeleteOrder",
     "GetInventory",
     "GetOrderById",
+    "GetStoreFile",
     "CreateUsersWithArrayInput",
     "CreateUsersWithListInput",
     "DeleteUser",
@@ -275,6 +277,11 @@ fn main() {
 
         Some("GetOrderById") => {
             let result = core.run(client.get_order_by_id(789));
+            println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
+         },
+
+        Some("GetStoreFile") => {
+            let result = core.run(client.get_store_file());
             println!("{:?} (X-Span-ID: {:?})", result, (client.context() as &Has<XSpanIdString>).get().clone());
          },
 

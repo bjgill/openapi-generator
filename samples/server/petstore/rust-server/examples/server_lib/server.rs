@@ -41,6 +41,7 @@ use petstore_api::{Api, ApiError,
                       DeleteOrderResponse,
                       GetInventoryResponse,
                       GetOrderByIdResponse,
+                      GetStoreFileResponse,
                       PlaceOrderResponse,
                       CreateUserResponse,
                       CreateUsersWithArrayInputResponse,
@@ -260,6 +261,13 @@ impl<C> Api<C> for Server<C> where C: Has<XSpanIdString>{
     fn get_order_by_id(&self, order_id: i64, context: &C) -> Box<Future<Item=GetOrderByIdResponse, Error=ApiError>> {
         let context = context.clone();
         println!("get_order_by_id({}) - X-Span-ID: {:?}", order_id, context.get().0.clone());
+        Box::new(futures::failed("Generic failure".into()))
+    }
+
+    /// Returns store details
+    fn get_store_file(&self, context: &C) -> Box<Future<Item=GetStoreFileResponse, Error=ApiError>> {
+        let context = context.clone();
+        println!("get_store_file() - X-Span-ID: {:?}", context.get().0.clone());
         Box::new(futures::failed("Generic failure".into()))
     }
 

@@ -69,6 +69,7 @@ use {Api,
      DeleteOrderResponse,
      GetInventoryResponse,
      GetOrderByIdResponse,
+     GetStoreFileResponse,
      PlaceOrderResponse,
      CreateUserResponse,
      CreateUsersWithArrayInputResponse,
@@ -2113,7 +2114,7 @@ if let Some(body) = body {
                 .map_err(|e| ApiError(format!("Failed to convert utf8 stream to String: {}", e))))
         }
 
-        if let Ok(Some(param_file)) = param_file.wait() { 
+        if let Ok(Some(param_file)) = param_file.wait() {
             match convert_stream_to_string(param_file) {
                 Ok(param_file) => {
                     // Add file to multipart form.
@@ -2393,6 +2394,69 @@ if let Some(body) = body {
 
                         future::ok(
                             GetOrderByIdResponse::OrderNotFound
+                        )
+                    ) as Box<Future<Item=_, Error=_>>
+                },
+                code => {
+                    let headers = response.headers().clone();
+                    Box::new(response.body()
+                            .take(100)
+                            .concat2()
+                            .then(move |body|
+                                future::err(ApiError(format!("Unexpected response code {}:\n{:?}\n\n{}",
+                                    code,
+                                    headers,
+                                    match body {
+                                        Ok(ref body) => match str::from_utf8(body) {
+                                            Ok(body) => Cow::from(body),
+                                            Err(e) => Cow::from(format!("<Body was not UTF8: {:?}>", e)),
+                                        },
+                                        Err(e) => Cow::from(format!("<Failed to read body: {}>", e)),
+                                    })))
+                            )
+                    ) as Box<Future<Item=_, Error=_>>
+                }
+            }
+        }))
+
+    }
+
+    fn get_store_file(&self, context: &C) -> Box<Future<Item=GetStoreFileResponse, Error=ApiError>> {
+
+
+        let uri = format!(
+            "{}/v2/store",
+            self.base_path
+        );
+
+        let uri = match Uri::from_str(&uri) {
+            Ok(uri) => uri,
+            Err(err) => return Box::new(futures::done(Err(ApiError(format!("Unable to build URI: {}", err))))),
+        };
+
+        let mut request = hyper::Request::new(hyper::Method::Get, uri);
+
+
+
+        request.headers_mut().set(XSpanId((context as &Has<XSpanIdString>).get().0.clone()));
+
+
+
+
+        Box::new(self.client_service.call(request)
+                             .map_err(|e| ApiError(format!("No response received: {}", e)))
+                             .and_then(|mut response| {
+            match response.status().as_u16() {
+                200 => {
+                    let body = Box::new(response.body()
+                                        .map(|chunk| chunk.to_vec())
+                                        .map_err(|_|
+                                                 Error::new(ErrorKind::Other, "Received error reading response.")
+                                        ));
+                    Box::new(
+
+                        future::ok(
+                            GetStoreFileResponse::SuccessfulOperation(body)
                         )
                     ) as Box<Future<Item=_, Error=_>>
                 },

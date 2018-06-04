@@ -68,6 +68,7 @@ use {Api,
      DeleteOrderResponse,
      GetInventoryResponse,
      GetOrderByIdResponse,
+     GetStoreFileResponse,
      PlaceOrderResponse,
      CreateUserResponse,
      CreateUsersWithArrayInputResponse,
@@ -107,6 +108,7 @@ mod paths {
             r"^/v2/pet/findByTags$",
             r"^/v2/pet/(?P<petId>[^/?#]*)$",
             r"^/v2/pet/(?P<petId>[^/?#]*)/uploadImage$",
+            r"^/v2/store$",
             r"^/v2/store/inventory$",
             r"^/v2/store/order$",
             r"^/v2/store/order/(?P<order_id>[^/?#]*)$",
@@ -142,22 +144,23 @@ mod paths {
     lazy_static! {
         pub static ref REGEX_PET_PETID_UPLOADIMAGE: regex::Regex = regex::Regex::new(r"^/v2/pet/(?P<petId>[^/?#]*)/uploadImage$").unwrap();
     }
-    pub static ID_STORE_INVENTORY: usize = 17;
-    pub static ID_STORE_ORDER: usize = 18;
-    pub static ID_STORE_ORDER_ORDER_ID: usize = 19;
+    pub static ID_STORE: usize = 17;
+    pub static ID_STORE_INVENTORY: usize = 18;
+    pub static ID_STORE_ORDER: usize = 19;
+    pub static ID_STORE_ORDER_ORDER_ID: usize = 20;
     lazy_static! {
         pub static ref REGEX_STORE_ORDER_ORDER_ID: regex::Regex = regex::Regex::new(r"^/v2/store/order/(?P<order_id>[^/?#]*)$").unwrap();
     }
-    pub static ID_USER: usize = 20;
-    pub static ID_USER_CREATEWITHARRAY: usize = 21;
-    pub static ID_USER_CREATEWITHLIST: usize = 22;
-    pub static ID_USER_LOGIN: usize = 23;
-    pub static ID_USER_LOGOUT: usize = 24;
-    pub static ID_USER_USERNAME: usize = 25;
+    pub static ID_USER: usize = 21;
+    pub static ID_USER_CREATEWITHARRAY: usize = 22;
+    pub static ID_USER_CREATEWITHLIST: usize = 23;
+    pub static ID_USER_LOGIN: usize = 24;
+    pub static ID_USER_LOGOUT: usize = 25;
+    pub static ID_USER_USERNAME: usize = 26;
     lazy_static! {
         pub static ref REGEX_USER_USERNAME: regex::Regex = regex::Regex::new(r"^/v2/user/(?P<username>[^/?#]*)$").unwrap();
     }
-    pub static ID_UUID_HEADERS_: usize = 26;
+    pub static ID_UUID_HEADERS_: usize = 27;
 }
 
 pub struct NewService<T, C> {
@@ -2555,6 +2558,85 @@ where
             },
 
 
+            // GetStoreFile - GET /store
+            &hyper::Method::Get if path.matched(paths::ID_STORE) => {
+                {
+                    let authorization = match (&context as &Has<Option<Authorization>>).get() {
+                        &Some(ref authorization) => authorization,
+                        &None => return Box::new(future::ok(Response::new()
+                                                .with_status(StatusCode::Forbidden)
+                                                .with_body("Unauthenticated"))),
+                    };
+
+                }
+
+
+
+
+
+
+
+                Box::new({
+                        {{
+
+                                Box::new(api_impl.get_store_file(&context)
+                                    .then(move |result| {
+                                        let mut response = Response::new();
+                                        response.headers_mut().set(XSpanId((&context as &Has<XSpanIdString>).get().0.to_string()));
+
+                                        match result {
+                                            Ok(rsp) => match rsp {
+                                                GetStoreFileResponse::SuccessfulOperation
+
+                                                    (body)
+
+
+                                                => {
+
+                                                    let body = body.fold(Vec::new(), | mut body, chunk| {
+                                                        body.extend(chunk.iter());
+                                                        future::ok::<Vec<u8>, io::Error>(body)
+                                                    })
+                                                    // Block whilst waiting for the stream to complete
+                                                    .wait();
+
+                                                    match body {
+                                                        // If no error occurred then create successful hyper response
+                                                        Ok(vec) => {
+                                                            response.set_status(StatusCode::try_from(200).unwrap());
+
+
+                                                            response.headers_mut().set(ContentType(mimetypes::responses::GET_STORE_FILE_SUCCESSFUL_OPERATION.clone()));
+
+                                                            response.set_body(vec);
+                                                        },
+                                                        // It's possible that errors were received in the stream, if this is the case then we can't return a success response to the client and instead must return an internal error.
+                                                        Err(e) => {
+                                                            response.set_status(StatusCode::InternalServerError);
+                                                            response.set_body("An internal error occurred");
+                                                        }
+                                                    }
+                                                },
+                                            },
+                                            Err(_) => {
+                                                // Application code returned an error. This should not happen, as the implementation should
+                                                // return a valid response.
+                                                response.set_status(StatusCode::InternalServerError);
+                                                response.set_body("An internal error occurred");
+                                            },
+                                        }
+
+                                        future::ok(response)
+                                    }
+                                ))
+
+                        }}
+                }) as Box<Future<Item=Response, Error=Error>>
+
+
+            },
+
+
             // PlaceOrder - POST /store/order
             &hyper::Method::Post if path.matched(paths::ID_STORE_ORDER) => {
 
@@ -3390,6 +3472,9 @@ impl RequestParser for ApiRequestParser {
 
             // GetOrderById - GET /store/order/{order_id}
             &hyper::Method::Get if path.matched(paths::ID_STORE_ORDER_ORDER_ID) => Ok("GetOrderById"),
+
+            // GetStoreFile - GET /store
+            &hyper::Method::Get if path.matched(paths::ID_STORE) => Ok("GetStoreFile"),
 
             // PlaceOrder - POST /store/order
             &hyper::Method::Post if path.matched(paths::ID_STORE_ORDER) => Ok("PlaceOrder"),

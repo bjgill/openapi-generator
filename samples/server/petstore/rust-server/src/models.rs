@@ -6,6 +6,7 @@ use serde_xml_rs;
 use serde::ser::Serializer;
 
 use std::collections::HashMap;
+use futures::Stream;
 use models;
 use swagger;
 

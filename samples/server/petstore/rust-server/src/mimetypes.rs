@@ -48,6 +48,10 @@ pub mod responses {
     lazy_static! {
         pub static ref GET_ORDER_BY_ID_SUCCESSFUL_OPERATION: Mime = "application/xml".parse().unwrap();
     }
+    /// Create Mime objects for the response content types for GetStoreFile
+    lazy_static! {
+        pub static ref GET_STORE_FILE_SUCCESSFUL_OPERATION: Mime = "application/json".parse().unwrap();
+    }
     /// Create Mime objects for the response content types for PlaceOrder
     lazy_static! {
         pub static ref PLACE_ORDER_SUCCESSFUL_OPERATION: Mime = "application/xml".parse().unwrap();

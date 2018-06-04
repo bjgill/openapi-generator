@@ -31,6 +31,8 @@ pub use futures::Future;
 mod mimetypes;
 
 pub use swagger::{ApiError, ContextWrapper};
+use std::fmt;
+use std::fmt::Debug;
 
 pub const BASE_PATH: &'static str = "/v2";
 pub const API_VERSION: &'static str = "1.0.0";
@@ -226,6 +228,17 @@ pub enum GetOrderByIdResponse {
     OrderNotFound ,
 }
 
+pub enum GetStoreFileResponse {
+    /// successful operation
+    SuccessfulOperation ( Box<Stream<Item=Vec<u8>, Error=Error> + Send> ) ,
+}
+
+impl Debug for GetStoreFileResponse {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "ResponseFile")
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum PlaceOrderResponse {
     /// successful operation
@@ -380,6 +393,9 @@ pub trait Api<C> {
     /// Find purchase order by ID
     fn get_order_by_id(&self, order_id: i64, context: &C) -> Box<Future<Item=GetOrderByIdResponse, Error=ApiError>>;
 
+    /// Returns store details
+    fn get_store_file(&self, context: &C) -> Box<Future<Item=GetStoreFileResponse, Error=ApiError>>;
+
     /// Place an order for a pet
     fn place_order(&self, body: models::Order, context: &C) -> Box<Future<Item=PlaceOrderResponse, Error=ApiError>>;
 
@@ -495,6 +511,9 @@ pub trait ApiNoContext {
 
     /// Find purchase order by ID
     fn get_order_by_id(&self, order_id: i64) -> Box<Future<Item=GetOrderByIdResponse, Error=ApiError>>;
+
+    /// Returns store details
+    fn get_store_file(&self) -> Box<Future<Item=GetStoreFileResponse, Error=ApiError>>;
 
     /// Place an order for a pet
     fn place_order(&self, body: models::Order) -> Box<Future<Item=PlaceOrderResponse, Error=ApiError>>;
@@ -677,6 +696,11 @@ impl<'a, T: Api<C>, C> ApiNoContext for ContextWrapper<'a, T, C> {
     /// Find purchase order by ID
     fn get_order_by_id(&self, order_id: i64) -> Box<Future<Item=GetOrderByIdResponse, Error=ApiError>> {
         self.api().get_order_by_id(order_id, &self.context())
+    }
+
+    /// Returns store details
+    fn get_store_file(&self) -> Box<Future<Item=GetStoreFileResponse, Error=ApiError>> {
+        self.api().get_store_file(&self.context())
     }
 
     /// Place an order for a pet
