@@ -527,7 +527,7 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
             processParam(param, op);
         }
 
-        List<String> consumes = new ArrayList<String>();
+        Set<String> consumes = getConsumesInfo(openAPI, operation);
 
         /* comment out the following logic as there's no consume in operation/global definition
         if (consumes != null) {
@@ -546,7 +546,7 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
         boolean consumesXml = false;
         // if "consumes" is defined (per operation or using global definition)
         if (consumes != null && !consumes.isEmpty()) {
-            consumes.addAll(getConsumesInfo(openAPI, operation));
+            // consumes.addAll(getConsumesInfo(openAPI, operation));
             List<Map<String, String>> c = new ArrayList<Map<String, String>>();
             for (String mimeType : consumes) {
                 Map<String, String> mediaType = new HashMap<String, String>();
@@ -605,7 +605,7 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
         }
 
 
-        /* TODO move the following logic to postProcessOperations as there's no body/form parameter in OAS 3.0
+        // TODO move the following logic to postProcessOperations as there's no body/form parameter in OAS 3.0
         if (op.bodyParam != null) {
             if (paramHasXmlNamespace(op.bodyParam, definitions)) {
                 op.bodyParam.vendorExtensions.put("has_namespace", "true");
@@ -647,7 +647,7 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
         for (CodegenParameter param : op.formParams) {
             processParam(param, op);
         }
-        */
+        //
 
         for (CodegenParameter param : op.headerParams) {
             // If a header uses UUIDs, we need to import the UUID package.
@@ -744,8 +744,8 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
             String datatype;
             try {
                 datatype = p.get$ref();
-                if (datatype.indexOf("#/definitions/") == 0) {
-                    datatype = toModelName(datatype.substring("#/definitions/".length()));
+                if (datatype.indexOf("#/components/schemas/") == 0) {
+                    datatype = toModelName(datatype.substring("#/components/schemas/".length()));
                 }
             } catch (Exception e) {
                 LOGGER.warn("Error obtaining the datatype from schema (model):" + p + ". Datatype default to Object");
@@ -787,6 +787,30 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
             }
         }
         */
+
+        // If this parameter is not a primitive type, prefix it with "models::" to
+        // ensure it's namespaced correctly in the Rust code.
+        if (!parameter.isString && !parameter.isNumeric && !parameter.isByteArray &&
+            !parameter.isBinary && !parameter.isFile && !parameter.isBoolean &&
+            !parameter.isDate && !parameter.isDateTime && !parameter.isUuid &&
+            !parameter.isListContainer && !parameter.isMapContainer &&
+            !languageSpecificPrimitives.contains(parameter.dataType)) {
+
+            LOGGER.info("Adding model to {}.", parameter.dataType);
+            parameter.vendorExtensions.put("refName", parameter.dataType);
+
+            parameter.dataType = "models::" + parameter.dataType;
+            parameter.baseType = parameter.dataType;
+
+            // String refName = ((RefModel) model).get$ref();
+            // if (refName.indexOf("#/components/schemas/") == 0) {
+            //     refName = refName.substring("#/components/schemas/".length());
+            // }
+            // parameter.vendorExtensions.put("refName", refName);
+        } else {
+            LOGGER.info("Not adding model to {}.", parameter.dataType);
+        }
+
         return parameter;
     }
 
@@ -794,11 +818,21 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
     public CodegenProperty fromProperty(String name, Schema p) {
         CodegenProperty property = super.fromProperty(name, p);
 
-        /* need to revise the logic below. Is this for alias?
-        if (p instanceof RefProperty) {
-            property.datatype = "models::" + property.datatype;
+        // If this property is not a primitive type, prefix it with "models::" to
+        // ensure it's namespaced correctly in the Rust code.
+        if (!property.isString && !property.isNumeric && !property.isByteArray &&
+            !property.isBinary && !property.isFile && !property.isBoolean &&
+            !property.isDate && !property.isDateTime && !property.isUuid &&
+            !property.isListContainer && !property.isMapContainer &&
+            !languageSpecificPrimitives.contains(property.dataType)) {
+
+            LOGGER.info("Adding model to {} (2).", property.dataType);
+
+            property.dataType = "models::" + property.dataType;
+        } else {
+            LOGGER.info("Not adding model to {} (2).", property.dataType);
         }
-        */
+
         return property;
     }
 
@@ -934,6 +968,7 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
     @Override
     public void postProcessModelProperty(CodegenModel model, CodegenProperty property) {
         super.postProcessModelProperty(model, property);
+
         if (!languageSpecificPrimitives.contains(property.dataType)) {
             // If we use a more qualified model name, then only camelize the actual type, not the qualifier.
             if (property.dataType.contains(":")) {
@@ -1069,6 +1104,11 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
                 param.vendorExtensions.put("formatString", "\\\"{}\\\"");
                 example = "\"" + ((param.example != null) ? param.example : "") + "\".to_string()";
             }
+        } else if (param.isFile) {
+            param.vendorExtensions.put("formatString", "{:?}");
+            op.vendorExtensions.put("hasFile", true);
+            additionalProperties.put("apiHasFile", true);
+            example = "Box::new(stream::once(Ok(b\"hello\".to_vec()))) as Box<Stream<Item=_, Error=_> + Send>";
         } else if (param.isPrimitiveType) {
             if ((param.isByteArray) ||
                     (param.isBinary)) {
@@ -1082,11 +1122,9 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
         } else if (param.isListContainer) {
             param.vendorExtensions.put("formatString", "{:?}");
             example = (param.example != null) ? param.example : "&Vec::new()";
-        } else if (param.isFile) {
+        } else if ((param.dataFormat != null) && ((param.dataFormat.equals("date-time")) || (param.dataFormat.equals("date")))) {
             param.vendorExtensions.put("formatString", "{:?}");
-            op.vendorExtensions.put("hasFile", true);
-            additionalProperties.put("apiHasFile", true);
-            example = "Box::new(stream::once(Ok(b\"hello\".to_vec()))) as Box<Stream<Item=_, Error=_> + Send>";
+            example = "None";
         } else {
             param.vendorExtensions.put("formatString", "{:?}");
             if (param.example != null) {
@@ -1097,17 +1135,11 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
         if (param.required) {
             if (example != null) {
                 param.vendorExtensions.put("example", example);
-            } else if (param.isListContainer) {
-                // Use the empty list if we don't have an example
-                param.vendorExtensions.put("example", "&Vec::new()");
             } else {
                 // If we don't have an example that we can provide, we need to disable the client example, as it won't build.
                 param.vendorExtensions.put("example", "???");
                 op.vendorExtensions.put("noClientExample", Boolean.TRUE);
             }
-        } else if ((param.dataFormat != null) && ((param.dataFormat.equals("date-time")) || (param.dataFormat.equals("date")))) {
-            param.vendorExtensions.put("formatString", "{:?}");
-            param.vendorExtensions.put("example", "None");
         } else {
             // Not required, so override the format string and example
             param.vendorExtensions.put("formatString", "{:?}");

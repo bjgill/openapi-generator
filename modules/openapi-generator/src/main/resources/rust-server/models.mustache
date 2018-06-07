@@ -8,6 +8,8 @@ use serde::ser::Serializer;
 use std::collections::HashMap;
 use models;
 use swagger;
+use futures::Stream;
+use hyper::Error;
 
 {{#models}}{{#model}}
 {{#description}}/// {{{description}}}
@@ -40,36 +42,7 @@ impl ::std::str::FromStr for {{classname}} {
         }
     }
 }
-{{/isEnum}}{{^isEnum}}{{#dataType}}{{! newtype}}#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
-{{#xmlName}}#[serde(rename = "{{xmlName}}")]{{/xmlName}}
-pub struct {{classname}}({{{dataType}}});
-
-impl ::std::convert::From<{{dataType}}> for {{classname}} {
-    fn from(x: {{dataType}}) -> Self {
-        {{classname}}(x)
-    }
-}
-
-impl ::std::convert::From<{{classname}}> for {{dataType}} {
-    fn from(x: {{classname}}) -> Self {
-        x.0
-    }
-}
-
-impl ::std::ops::Deref for {{classname}} {
-    type Target = {{{dataType}}};
-    fn deref(&self) -> &{{{dataType}}} {
-        &self.0
-    }
-}
-
-impl ::std::ops::DerefMut for {{classname}} {
-    fn deref_mut(&mut self) -> &mut {{{dataType}}} {
-        &mut self.0
-    }
-}
-
-{{/dataType}}{{^dataType}}{{#arrayModelType}}{{#vendorExtensions}}{{#itemXmlName}}// Utility function for wrapping list elements when serializing xml
+{{/isEnum}}{{^isEnum}}{{#arrayModelType}}{{#vendorExtensions}}{{#itemXmlName}}// Utility function for wrapping list elements when serializing xml
 fn wrap_in_{{itemXmlName}}<S>(item: &Vec<{{arrayModelType}}>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -164,7 +137,7 @@ impl {{classname}} {
         }
     }
 }
-{{/arrayModelType}}{{/dataType}}{{/isEnum}}{{/model}}{{/models}}{{#usesXmlNamespaces}}
+{{/arrayModelType}}{{/isEnum}}{{/model}}{{/models}}{{#usesXmlNamespaces}}
 //XML namespaces
 pub mod namespaces {
     lazy_static!{

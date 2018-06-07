@@ -8,6 +8,8 @@ use serde::ser::Serializer;
 use std::collections::HashMap;
 use models;
 use swagger;
+use futures::Stream;
+use hyper::Error;
 
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -240,6 +242,31 @@ impl Capitalization {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Cat {
+    #[serde(rename = "className")]
+    pub class_name: String,
+
+    #[serde(rename = "color")]
+    #[serde(skip_serializing_if="Option::is_none")]
+    pub color: Option<String>,
+
+    #[serde(rename = "declawed")]
+    #[serde(skip_serializing_if="Option::is_none")]
+    pub declawed: Option<bool>,
+
+}
+
+impl Cat {
+    pub fn new(class_name: String, ) -> Cat {
+        Cat {
+            class_name: class_name,
+            color: Some("red".to_string()),
+            declawed: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Category")]
 pub struct Category {
     #[serde(rename = "id")]
@@ -295,13 +322,38 @@ impl Client {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Dog {
+    #[serde(rename = "className")]
+    pub class_name: String,
+
+    #[serde(rename = "color")]
+    #[serde(skip_serializing_if="Option::is_none")]
+    pub color: Option<String>,
+
+    #[serde(rename = "breed")]
+    #[serde(skip_serializing_if="Option::is_none")]
+    pub breed: Option<String>,
+
+}
+
+impl Dog {
+    pub fn new(class_name: String, ) -> Dog {
+        Dog {
+            class_name: class_name,
+            color: Some("red".to_string()),
+            breed: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EnumArrays {
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "just_symbol")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub just_symbol: Option<String>,
 
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "array_enum")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub array_enum: Option<Vec<String>>,
@@ -356,21 +408,21 @@ impl ::std::str::FromStr for EnumClass {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EnumTest {
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "enum_string")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub enum_string: Option<String>,
 
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "enum_string_required")]
     pub enum_string_required: String,
 
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "enum_integer")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub enum_integer: Option<i32>,
 
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "enum_number")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub enum_number: Option<f64>,
@@ -427,7 +479,7 @@ pub struct FormatTest {
 
     #[serde(rename = "binary")]
     #[serde(skip_serializing_if="Option::is_none")]
-    pub binary: Option<swagger::ByteArray>,
+    pub binary: Option<Box<Stream<Item=Vec<u8>, Error=Error> + Send>>,
 
     #[serde(rename = "date")]
     pub date: chrono::DateTime<chrono::Utc>,
@@ -486,6 +538,76 @@ impl HasOnlyReadOnly {
     }
 }
 
+// Utility function for wrapping list elements when serializing xml
+fn wrap_in_item<S>(item: &Vec<String>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serde_xml_rs::wrap_primitives(item, serializer, "item")
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ItemList(Vec<String>);
+
+impl ::std::convert::From<Vec<String>> for ItemList {
+    fn from(x: Vec<String>) -> Self {
+        ItemList(x)
+    }
+}
+
+impl ::std::convert::From<ItemList> for Vec<String> {
+    fn from(x: ItemList) -> Self {
+        x.0
+    }
+}
+
+impl ::std::iter::FromIterator<String> for ItemList {
+    fn from_iter<U: IntoIterator<Item=String>>(u: U) -> Self {
+        ItemList(Vec::<String>::from_iter(u))
+    }
+}
+
+impl ::std::iter::IntoIterator for ItemList {
+    type Item = String;
+    type IntoIter = ::std::vec::IntoIter<String>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<'a> ::std::iter::IntoIterator for &'a ItemList {
+    type Item = &'a String;
+    type IntoIter = ::std::slice::Iter<'a, String>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.0).into_iter()
+    }
+}
+
+impl<'a> ::std::iter::IntoIterator for &'a mut ItemList {
+    type Item = &'a mut String;
+    type IntoIter = ::std::slice::IterMut<'a, String>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.0).into_iter()
+    }
+}
+
+impl ::std::ops::Deref for ItemList {
+    type Target = Vec<String>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ::std::ops::DerefMut for ItemList {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct List {
     #[serde(rename = "123-list")]
@@ -508,7 +630,7 @@ pub struct MapTest {
     #[serde(skip_serializing_if="Option::is_none")]
     pub map_map_of_string: Option<HashMap<String, HashMap<String, String>>>,
 
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "map_of_enum_string")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub map_of_enum_string: Option<HashMap<String, String>>,
@@ -659,7 +781,7 @@ pub struct Order {
     pub ship_date: Option<chrono::DateTime<chrono::Utc>>,
 
     /// Order Status
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "status")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub status: Option<String>,
@@ -682,36 +804,6 @@ impl Order {
         }
     }
 }
-
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
-
-pub struct OuterBoolean(bool);
-
-impl ::std::convert::From<bool> for OuterBoolean {
-    fn from(x: bool) -> Self {
-        OuterBoolean(x)
-    }
-}
-
-impl ::std::convert::From<OuterBoolean> for bool {
-    fn from(x: OuterBoolean) -> Self {
-        x.0
-    }
-}
-
-impl ::std::ops::Deref for OuterBoolean {
-    type Target = bool;
-    fn deref(&self) -> &bool {
-        &self.0
-    }
-}
-
-impl ::std::ops::DerefMut for OuterBoolean {
-    fn deref_mut(&mut self) -> &mut bool {
-        &mut self.0
-    }
-}
-
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct OuterComposite {
@@ -776,66 +868,6 @@ impl ::std::str::FromStr for OuterEnum {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
-
-pub struct OuterNumber(f64);
-
-impl ::std::convert::From<f64> for OuterNumber {
-    fn from(x: f64) -> Self {
-        OuterNumber(x)
-    }
-}
-
-impl ::std::convert::From<OuterNumber> for f64 {
-    fn from(x: OuterNumber) -> Self {
-        x.0
-    }
-}
-
-impl ::std::ops::Deref for OuterNumber {
-    type Target = f64;
-    fn deref(&self) -> &f64 {
-        &self.0
-    }
-}
-
-impl ::std::ops::DerefMut for OuterNumber {
-    fn deref_mut(&mut self) -> &mut f64 {
-        &mut self.0
-    }
-}
-
-
-#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
-
-pub struct OuterString(String);
-
-impl ::std::convert::From<String> for OuterString {
-    fn from(x: String) -> Self {
-        OuterString(x)
-    }
-}
-
-impl ::std::convert::From<OuterString> for String {
-    fn from(x: OuterString) -> Self {
-        x.0
-    }
-}
-
-impl ::std::ops::Deref for OuterString {
-    type Target = String;
-    fn deref(&self) -> &String {
-        &self.0
-    }
-}
-
-impl ::std::ops::DerefMut for OuterString {
-    fn deref_mut(&mut self) -> &mut String {
-        &mut self.0
-    }
-}
-
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename = "Pet")]
 pub struct Pet {
@@ -858,7 +890,7 @@ pub struct Pet {
     pub tags: Option<Vec<models::Tag>>,
 
     /// pet status in the store
-    // Note: inline enums are not fully supported by swagger-codegen
+    // Note: inline enums are not fully supported by openapi-generator
     #[serde(rename = "status")]
     #[serde(skip_serializing_if="Option::is_none")]
     pub status: Option<String>,
@@ -992,51 +1024,30 @@ impl User {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Cat {
-    #[serde(rename = "className")]
-    pub class_name: String,
+#[serde(rename = "group")]
+pub struct XmlObject {
+    #[serde(rename = "name")]
+    pub name: String,
 
-    #[serde(rename = "color")]
-    #[serde(skip_serializing_if="Option::is_none")]
-    pub color: Option<String>,
-
-    #[serde(rename = "declawed")]
-    #[serde(skip_serializing_if="Option::is_none")]
-    pub declawed: Option<bool>,
+    #[serde(rename = "itemList")]
+    #[serde(serialize_with = "wrap_in_item")]
+    pub item_list: models::ItemList,
 
 }
 
-impl Cat {
-    pub fn new(class_name: String, ) -> Cat {
-        Cat {
-            class_name: class_name,
-            color: Some("red".to_string()),
-            declawed: None,
+impl XmlObject {
+    pub fn new(name: String, item_list: models::ItemList, ) -> XmlObject {
+        XmlObject {
+            name: name,
+            item_list: item_list,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Dog {
-    #[serde(rename = "className")]
-    pub class_name: String,
-
-    #[serde(rename = "color")]
-    #[serde(skip_serializing_if="Option::is_none")]
-    pub color: Option<String>,
-
-    #[serde(rename = "breed")]
-    #[serde(skip_serializing_if="Option::is_none")]
-    pub breed: Option<String>,
-
-}
-
-impl Dog {
-    pub fn new(class_name: String, ) -> Dog {
-        Dog {
-            class_name: class_name,
-            color: Some("red".to_string()),
-            breed: None,
-        }
+//XML namespaces
+pub mod namespaces {
+    lazy_static!{
+        pub static ref XMLOBJECT: String = "http://example.com/schema.xsd".to_string();
+        
     }
 }
