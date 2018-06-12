@@ -36,10 +36,10 @@ paths:
       operationId: addPet
       consumes:
         - application/json
-        - application/xml
+        # - application/xml
       produces:
         - application/xml
-        - application/json
+        # - application/json
       parameters:
         - in: body
           name: body
@@ -62,10 +62,10 @@ paths:
       operationId: updatePet
       consumes:
         - application/json
-        - application/xml
+        # - application/xml
       produces:
         - application/xml
-        - application/json
+        # - application/json
       parameters:
         - in: body
           name: body
@@ -192,7 +192,7 @@ paths:
         - application/x-www-form-urlencoded
       produces:
         - application/xml
-        - application/json
+        # - application/json
       parameters:
         - name: petId
           in: path
@@ -632,9 +632,10 @@ paths:
       description: To test enum parameters
       operationId: testEnumParameters
       consumes:
-        - "*/*"
+        - application/x-www-form-urlencoded
       produces:
-        - "*/*"
+        - application/json
+        # - "*/*"
       parameters:
         - name: enum_form_string_array
           type: array
@@ -729,11 +730,10 @@ paths:
         가짜 엔드 포인트
       operationId: testEndpointParameters
       consumes:
-        - application/xml; charset=utf-8
-        - application/json; charset=utf-8
+        - application/x-www-form-urlencoded
       produces:
         - application/xml; charset=utf-8
-        - application/json; charset=utf-8
+        # - application/json; charset=utf-8
       parameters:
         - name: integer
           type: integer
@@ -892,29 +892,30 @@ paths:
           description: Output composite
           schema:
             $ref: '#/definitions/OuterComposite'
-  /fake/jsonFormData:
-    get:
-      tags:
-        - fake
-      summary: test json serialization of form data
-      description: ''
-      operationId: testJsonFormData
-      consumes:
-        - application/json
-      parameters:
-        - name: param
-          in: formData
-          description: field1
-          required: true
-          type: string
-        - name: param2
-          in: formData
-          description: field2
-          required: true
-          type: string
-      responses:
-        '200':
-          description: successful operation
+  # Json form data is not supported - it can only be one of the two form types.
+  # /fake/jsonFormData:
+  #   get:
+  #     tags:
+  #       - fake
+  #     summary: test json serialization of form data
+  #     description: ''
+  #     operationId: testJsonFormData
+  #     consumes:
+  #       - application/json
+  #     parameters:
+  #       - name: param
+  #         in: formData
+  #         description: field1
+  #         required: true
+  #         type: string
+  #       - name: param2
+  #         in: formData
+  #         description: field2
+  #         required: true
+  #         type: string
+  #     responses:
+  #       '200':
+  #         description: successful operation
   /fake/xmlFeatures:
     get:
       summary: Get some XML
@@ -1050,24 +1051,25 @@ paths:
           description: successful operation
           schema:
             $ref: '#/definitions/Client'
-  /uuid-headers/:
-    post:
-      summary: an endpoint with uuid-type headers
-      operationId: UuidHeader
-      parameters:
-        - name: X-Uuid-Header
-          in: header
-          required: true
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Success or not found
-          headers:
-            X-Uuid-Header:
-              type: string
-              format: uuid
-              description: SAS correlation header
+  # This doesn't work at the moment.
+  # /uuid-headers/:
+  #   post:
+  #     summary: an endpoint with uuid-type headers
+  #     operationId: UuidHeader
+  #     parameters:
+  #       - name: X-Uuid-Header
+  #         in: header
+  #         required: true
+  #         type: string
+  #         format: uuid
+  #     responses:
+  #       '200':
+  #         description: Success or not found
+  #         headers:
+  #           X-Uuid-Header:
+  #             type: string
+  #             format: uuid
+  #             description: SAS correlation header
 
 securityDefinitions:
   petstore_auth:
@@ -1381,32 +1383,32 @@ definitions:
           - -1.2
       outerEnum:
         $ref: '#/definitions/OuterEnum'
-  AdditionalPropertiesClass:
-    type: object
-    properties:
-      map_property:
-        type: object
-        additionalProperties:
-          type: string
-      map_of_map_property:
-        type: object
-        additionalProperties:
-          type: object
-          additionalProperties:
-            type: string
-  MixedPropertiesAndAdditionalPropertiesClass:
-    type: object
-    properties:
-      uuid:
-        type: string
-        format: uuid
-      dateTime:
-        type: string
-        format: date-time
-      map:
-        type: object
-        additionalProperties:
-          $ref: '#/definitions/Animal'
+  # AdditionalPropertiesClass:
+  #   type: object
+  #   properties:
+  #     map_property:
+  #       type: object
+  #       additionalProperties:
+  #         type: string
+  #     map_of_map_property:
+  #       type: object
+  #       additionalProperties:
+  #         type: object
+  #         additionalProperties:
+  #           type: string
+  # MixedPropertiesAndAdditionalPropertiesClass:
+  #   type: object
+  #   properties:
+  #     uuid:
+  #       type: string
+  #       format: uuid
+  #     dateTime:
+  #       type: string
+  #       format: date-time
+  #     map:
+  #       type: object
+  #       additionalProperties:
+  #         $ref: '#/definitions/Animal'
   List:
     type: object
     properties:

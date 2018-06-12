@@ -1,0 +1,134 @@
+openapi: 3.0.1
+info:
+  contact:
+    email: apiteam@swagger.io
+  description: 'This spec is mainly for testing Petstore server and contains fake
+    endpoints, models. Please do not use this for any other purpose. Special characters:
+    " \'
+  license:
+    name: Apache-2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Petstore
+  version: 1.0.0
+servers:
+- url: http://petstore.swagger.io:80/v2
+tags:
+- description: Everything about your Pets
+  externalDocs:
+    description: Find out more
+    url: http://swagger.io
+  name: pet
+- description: Access to Petstore orders
+  name: store
+- description: Operations about user
+  externalDocs:
+    description: Find out more about our store
+    url: http://swagger.io
+  name: user
+paths:
+  /fake/outer/number:
+    post:
+      description: Test serialization of outer number types
+      operationId: fakeOuterNumberSerialize
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OuterNumber'
+        description: Input number as post body
+        required: false
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OuterNumber'
+          description: Output number
+      tags:
+      - fake
+  /fake/outer/string:
+    post:
+      description: Test serialization of outer string types
+      operationId: fakeOuterStringSerialize
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/OuterString'
+        description: Input string as post body
+        required: false
+      responses:
+        200:
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/OuterString'
+          description: Output string
+      tags:
+      - fake
+  /fake/outer/boolean:
+    post:
+      description: Test serialization of outer boolean types
+      operationId: fakeOuterBooleanSerialize
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/OuterBoolean'
+        description: Input boolean as post body
+        required: false
+      responses:
+        200:
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/OuterBoolean'
+          description: Output boolean
+      tags:
+      - fake
+  /fake/outer/composite:
+    post:
+      description: Test serialization of object with outer number type
+      operationId: fakeOuterCompositeSerialize
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/OuterComposite'
+        description: Input composite as post body
+        required: false
+      responses:
+        200:
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/OuterComposite'
+          description: Output composite
+      tags:
+      - fake
+components:
+  schemas:
+    OuterString:
+      type: string
+    OuterNumber:
+      type: number
+    OuterBoolean:
+      type: boolean
+    OuterEnum:
+      enum:
+      - placed
+      - approved
+      - delivered
+      type: string
+    OuterComposite:
+      example: {}
+      properties:
+        my_number:
+          $ref: '#/components/schemas/OuterNumber'
+        my_string:
+          $ref: '#/components/schemas/OuterString'
+        my_boolean:
+          $ref: '#/components/schemas/OuterBoolean'
+      type: object
+
