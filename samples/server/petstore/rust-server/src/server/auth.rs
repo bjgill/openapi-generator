@@ -87,43 +87,6 @@ impl<T, C> hyper::server::Service for Service<T, C>
     fn call(&self, req: Self::Request) -> Self::Future {
         let context = C::default().push(XSpanIdString::get_or_generate(&req));
 
-        {
-            header! { (ApiKey1, "api_key") => [String] }
-            if let Some(header) = req.headers().get::<ApiKey1>().cloned() {
-                let auth_data = AuthData::ApiKey(header.0);
-                let context = context.push(Some(auth_data));
-                return self.inner.call((req, context));
-            }
-        }
-        {
-            let key = form_urlencoded::parse(req.query().unwrap_or_default().as_bytes())
-                .filter(|e| e.0 == "api_key_query")
-                .map(|e| e.1.clone().into_owned())
-                .nth(0);
-            if let Some(key) = key {
-                let auth_data = AuthData::ApiKey(key);
-                let context = context.push(Some(auth_data));
-                return self.inner.call((req, context));
-            }
-        }
-        {
-            use hyper::header::{Authorization, Basic, Bearer};
-            use std::ops::Deref;
-            if let Some(basic) = req.headers().get::<Authorization<Basic>>().cloned() {
-                let auth_data = AuthData::Basic(basic.deref().clone());
-                let context = context.push(Some(auth_data));
-                return self.inner.call((req, context));
-            }
-        }
-        {
-            use hyper::header::{Authorization, Basic, Bearer};
-            use std::ops::Deref;
-            if let Some(bearer) = req.headers().get::<Authorization<Bearer>>().cloned() {
-                let auth_data = AuthData::Bearer(bearer.deref().clone());
-                let context = context.push(Some(auth_data));
-                return self.inner.call((req, context));
-            }
-        }
 
         let context = context.push(None);
         return self.inner.call((req, context));
