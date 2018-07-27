@@ -1,10 +1,17 @@
-package io.swagger.codegen;
+package org.openapitools.codegen;
 
-import io.swagger.models.*;
-import io.swagger.models.parameters.BodyParameter;
-import io.swagger.models.parameters.Parameter;
-import io.swagger.models.properties.*;
-import io.swagger.util.Json;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.*;
+// import io.swagger.v3.oas.models.parameters.BodyParameter;
+import io.swagger.v3.oas.models.parameters.Parameter;
+// import io.swagger.v3.oas.models.properties.*;
+import io.swagger.v3.oas.models.Paths;
+
+import io.swagger.v3.core.util.Json;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,23 +21,23 @@ import java.util.List;
 import java.util.Map;
 
 public class InlineModelResolver {
-    private Swagger swagger;
+    private OpenAPI openapi;
     private boolean skipMatches;
     static Logger LOGGER = LoggerFactory.getLogger(InlineModelResolver.class);
 
-    Map<String, Model> addedModels = new HashMap<String, Model>();
+    Map<String, Schema> addedModels = new HashMap<String, Schema>();
     Map<String, String> generatedSignature = new HashMap<String, String>();
 
-    public void flatten(Swagger swagger) {
-        this.swagger = swagger;
+    public void flatten(OpenAPI openapi) {
+        this.openapi = openapi;
 
-        if (swagger.getDefinitions() == null) {
-            swagger.setDefinitions(new HashMap<String, Model>());
+        if (openapi.getDefinitions() == null) {
+            openapi.setDefinitions(new HashMap<String, Schema>());
         }
 
         // operations
-        Map<String, Path> paths = swagger.getPaths();
-        Map<String, Model> models = swagger.getDefinitions();
+        Map<String, Path> paths = openapi.getPaths();
+        Map<String, Schema> models = openapi.getDefinitions();
 
         if (paths != null) {
             for (String pathname : paths.keySet()) {
@@ -41,48 +48,48 @@ public class InlineModelResolver {
 
                     if (parameters != null) {
                         for (Parameter parameter : parameters) {
-                            if (parameter instanceof BodyParameter) {
-                                BodyParameter bp = (BodyParameter) parameter;
-                                if (bp.getSchema() != null) {
-                                    Model model = bp.getSchema();
-                                    if (model instanceof ModelImpl) {
-                                        ModelImpl obj = (ModelImpl) model;
-                                        if (obj.getType() == null || "object".equals(obj.getType())) {
-                                            if (obj.getProperties() != null && obj.getProperties().size() > 0) {
-                                                flattenProperties(obj.getProperties(), pathname);
-                                                String modelName = resolveModelName(obj.getTitle(), bp.getName());
-                                                bp.setSchema(new RefModel(modelName));
-                                                addGenerated(modelName, model);
-                                                swagger.addDefinition(modelName, model);
-                                            }
-                                        }
-                                    } else if (model instanceof ArrayModel) {
-                                        ArrayModel am = (ArrayModel) model;
-                                        Property inner = am.getItems();
+                            // if (parameter instanceof BodyParameter) {
+                            //     BodyParameter bp = (BodyParameter) parameter;
+                            //     if (bp.getSchema() != null) {
+                            //         Schema model = bp.getSchema();
+                            //         if (model instanceof Schema) {
+                            //             Schema obj = (Schema) model;
+                            //             if (obj.getType() == null || "object".equals(obj.getType())) {
+                            //                 if (obj.getProperties() != null && obj.getProperties().size() > 0) {
+                            //                     flattenProperties(obj.getProperties(), pathname);
+                            //                     String modelName = resolveModelName(obj.getTitle(), bp.getName());
+                            //                     bp.setSchema(new RefModel(modelName));
+                            //                     addGenerated(modelName, model);
+                            //                     swagger.addDefinition(modelName, model);
+                            //                 }
+                            //             }
+                            //         } else if (model instanceof ArrayModel) {
+                            //             ArrayModel am = (ArrayModel) model;
+                            //             Schema inner = am.getItems();
 
-                                        if (inner instanceof ObjectProperty) {
-                                            ObjectProperty op = (ObjectProperty) inner;
-                                            if (op.getProperties() != null && op.getProperties().size() > 0) {
-                                                flattenProperties(op.getProperties(), pathname);
-                                                String modelName = resolveModelName(op.getTitle(), bp.getName());
-                                                Model innerModel = modelFromProperty(op, modelName);
-                                                String existing = matchGenerated(innerModel);
-                                                if (existing != null) {
-                                                    RefProperty refProperty = new RefProperty(existing);
-                                                    refProperty.setRequired(op.getRequired());
-                                                    am.setItems(refProperty);
-                                                } else {
-                                                    RefProperty refProperty = new RefProperty(modelName);
-                                                    refProperty.setRequired(op.getRequired());
-                                                    am.setItems(refProperty);
-                                                    addGenerated(modelName, innerModel);
-                                                    swagger.addDefinition(modelName, innerModel);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            //             if (inner instanceof ObjectSchema) {
+                            //                 ObjectSchema op = (ObjectSchema) inner;
+                            //                 if (op.getProperties() != null && op.getProperties().size() > 0) {
+                            //                     flattenProperties(op.getProperties(), pathname);
+                            //                     String modelName = resolveModelName(op.getTitle(), bp.getName());
+                            //                     Schema innerModel = modelFromProperty(op, modelName);
+                            //                     String existing = matchGenerated(innerModel);
+                            //                     if (existing != null) {
+                            //                         RefProperty refProperty = new RefProperty(existing);
+                            //                         refProperty.setRequired(op.getRequired());
+                            //                         am.setItems(refProperty);
+                            //                     } else {
+                            //                         RefProperty refProperty = new RefProperty(modelName);
+                            //                         refProperty.setRequired(op.getRequired());
+                            //                         am.setItems(refProperty);
+                            //                         addGenerated(modelName, innerModel);
+                            //                         swagger.addDefinition(modelName, innerModel);
+                            //                     }
+                            //                 }
+                            //             }
+                            //         }
+                            //     }
+                            // }
                         }
                     }
                     Map<String, Response> responses = operation.getResponses();
@@ -90,61 +97,61 @@ public class InlineModelResolver {
                         for (String key : responses.keySet()) {
                             Response response = responses.get(key);
                             if (response.getSchema() != null) {
-                                Property property = response.getSchema();
-                                if (property instanceof ObjectProperty) {
-                                    ObjectProperty op = (ObjectProperty) property;
+                                Schema property = response.getSchema();
+                                if (property instanceof ObjectSchema) {
+                                    ObjectSchema op = (ObjectSchema) property;
                                     if (op.getProperties() != null && op.getProperties().size() > 0) {
                                         String modelName = resolveModelName(op.getTitle(), "inline_response_" + key);
-                                        Model model = modelFromProperty(op, modelName);
+                                        Schema model = modelFromProperty(op, modelName);
                                         String existing = matchGenerated(model);
                                         if (existing != null) {
-                                            Property refProperty = this.makeRefProperty(existing, property);
+                                            Schema refProperty = this.makeRefProperty(existing, property);
                                             refProperty.setRequired(op.getRequired());
                                             response.setSchema(refProperty);
                                         } else {
-                                            Property refProperty = this.makeRefProperty(modelName, property);
+                                            Schema refProperty = this.makeRefProperty(modelName, property);
                                             refProperty.setRequired(op.getRequired());
                                             response.setSchema(refProperty);
                                             addGenerated(modelName, model);
-                                            swagger.addDefinition(modelName, model);
+                                            openapi.addDefinition(modelName, model);
                                         }
                                     }
-                                } else if (property instanceof ArrayProperty) {
-                                    ArrayProperty ap = (ArrayProperty) property;
-                                    Property inner = ap.getItems();
+                                } else if (property instanceof ArraySchema) {
+                                    ArraySchema ap = (ArraySchema) property;
+                                    Schema inner = ap.getItems();
 
-                                    if (inner instanceof ObjectProperty) {
-                                        ObjectProperty op = (ObjectProperty) inner;
+                                    if (inner instanceof ObjectSchema) {
+                                        ObjectSchema op = (ObjectSchema) inner;
                                         if (op.getProperties() != null && op.getProperties().size() > 0) {
                                             flattenProperties(op.getProperties(), pathname);
                                             String modelName = resolveModelName(op.getTitle(),
                                                     "inline_response_" + key);
-                                            Model innerModel = modelFromProperty(op, modelName);
+                                            Schema innerModel = modelFromProperty(op, modelName);
                                             String existing = matchGenerated(innerModel);
                                             if (existing != null) {
-                                                Property refProperty = this.makeRefProperty(existing, op);
+                                                Schema refProperty = this.makeRefProperty(existing, op);
                                                 refProperty.setRequired(op.getRequired());
                                                 ap.setItems(refProperty);
                                             } else {
-                                                Property refProperty = this.makeRefProperty(modelName, op);
+                                                Schema refProperty = this.makeRefProperty(modelName, op);
                                                 refProperty.setRequired(op.getRequired());
                                                 ap.setItems(refProperty);
                                                 addGenerated(modelName, innerModel);
-                                                swagger.addDefinition(modelName, innerModel);
+                                                openapi.addDefinition(modelName, innerModel);
                                             }
                                         }
                                     }
-                                } else if (property instanceof MapProperty) {
-                                    MapProperty mp = (MapProperty) property;
+                                } else if (property instanceof MapSchema) {
+                                    MapSchema mp = (MapSchema) property;
 
-                                    Property innerProperty = mp.getAdditionalProperties();
-                                    if (innerProperty instanceof ObjectProperty) {
-                                        ObjectProperty op = (ObjectProperty) innerProperty;
+                                    Schema innerProperty = mp.getAdditionalProperties();
+                                    if (innerProperty instanceof ObjectSchema) {
+                                        ObjectSchema op = (ObjectSchema) innerProperty;
                                         if (op.getProperties() != null && op.getProperties().size() > 0) {
                                             flattenProperties(op.getProperties(), pathname);
                                             String modelName = resolveModelName(op.getTitle(),
                                                     "inline_response_" + key);
-                                            Model innerModel = modelFromProperty(op, modelName);
+                                            Schema innerModel = modelFromProperty(op, modelName);
                                             String existing = matchGenerated(innerModel);
                                             if (existing != null) {
                                                 RefProperty refProperty = new RefProperty(existing);
@@ -155,7 +162,7 @@ public class InlineModelResolver {
                                                 refProperty.setRequired(op.getRequired());
                                                 mp.setAdditionalProperties(refProperty);
                                                 addGenerated(modelName, innerModel);
-                                                swagger.addDefinition(modelName, innerModel);
+                                                openapi.addDefinition(modelName, innerModel);
                                             }
                                         }
                                     }
@@ -171,24 +178,24 @@ public class InlineModelResolver {
         if (models != null) {
             List<String> modelNames = new ArrayList<String>(models.keySet());
             for (String modelName : modelNames) {
-                Model model = models.get(modelName);
-                if (model instanceof ModelImpl) {
-                    ModelImpl m = (ModelImpl) model;
+                Schema model = models.get(modelName);
+                if (model instanceof Schema) {
+                    Schema m = (Schema) model;
 
-                    Map<String, Property> properties = m.getProperties();
+                    Map<String, Schema> properties = m.getProperties();
                     flattenProperties(properties, modelName);
                     fixStringModel(m);
                 } else if (model instanceof ArrayModel) {
                     ArrayModel m = (ArrayModel) model;
-                    Property inner = m.getItems();
-                    if (inner instanceof ObjectProperty) {
-                        ObjectProperty op = (ObjectProperty) inner;
+                    Schema inner = m.getItems();
+                    if (inner instanceof ObjectSchema) {
+                        ObjectSchema op = (ObjectSchema) inner;
                         if (op.getProperties() != null && op.getProperties().size() > 0) {
                             String innerModelName = resolveModelName(op.getTitle(), modelName + "_inner");
-                            Model innerModel = modelFromProperty(op, innerModelName);
+                            Schema innerModel = modelFromProperty(op, innerModelName);
                             String existing = matchGenerated(innerModel);
                             if (existing == null) {
-                                swagger.addDefinition(innerModelName, innerModel);
+                                openapi.addDefinition(innerModelName, innerModel);
                                 addGenerated(innerModelName, innerModel);
                                 RefProperty refProperty = new RefProperty(innerModelName);
                                 refProperty.setRequired(op.getRequired());
@@ -203,7 +210,7 @@ public class InlineModelResolver {
                 } else if (model instanceof ComposedModel) {
                     ComposedModel m = (ComposedModel) model;
                     if (m.getChild() != null) {
-                        Map<String, Property> properties = m.getChild().getProperties();
+                        Map<String, Schema> properties = m.getChild().getProperties();
                         flattenProperties(properties, modelName);
                     }
                 }
@@ -214,9 +221,9 @@ public class InlineModelResolver {
     /**
      * This function fix models that are string (mostly enum). Before this fix, the example
      * would look something like that in the doc: "\"example from def\""
-     * @param m Model implementation
+     * @param m Schema implementation
      */
-    private void fixStringModel(ModelImpl m) {
+    private void fixStringModel(Schema m) {
         if (m.getType() != null && m.getType().equals("string") && m.getExample() != null) {
             String example = m.getExample().toString();
             if (example.substring(0, 1).equals("\"") &&
@@ -234,7 +241,7 @@ public class InlineModelResolver {
         }
     }
 
-    public String matchGenerated(Model model) {
+    public String matchGenerated(Schema model) {
         if (this.skipMatches) {
             return null;
         }
@@ -245,7 +252,7 @@ public class InlineModelResolver {
         return null;
     }
 
-    public void addGenerated(String name, Model model) {
+    public void addGenerated(String name, Schema model) {
         generatedSignature.put(Json.pretty(model), name);
     }
 
@@ -262,9 +269,9 @@ public class InlineModelResolver {
             if (count > 0) {
                 name = key + "_" + count;
             }
-            if (swagger.getDefinitions() == null) {
+            if (openapi.getDefinitions() == null) {
                 return name;
-            } else if (!swagger.getDefinitions().containsKey(name)) {
+            } else if (!openapi.getDefinitions().containsKey(name)) {
                 return name;
             }
             count += 1;
@@ -272,21 +279,21 @@ public class InlineModelResolver {
         return key;
     }
 
-    public void flattenProperties(Map<String, Property> properties, String path) {
+    public void flattenProperties(Map<String, Schema> properties, String path) {
         if (properties == null) {
             return;
         }
-        Map<String, Property> propsToUpdate = new HashMap<String, Property>();
-        Map<String, Model> modelsToAdd = new HashMap<String, Model>();
+        Map<String, Schema> propsToUpdate = new HashMap<String, Schema>();
+        Map<String, Schema> modelsToAdd = new HashMap<String, Schema>();
         for (String key : properties.keySet()) {
-            Property property = properties.get(key);
-            if (property instanceof ObjectProperty && ((ObjectProperty) property).getProperties() != null
-                    && ((ObjectProperty) property).getProperties().size() > 0) {
+            Schema property = properties.get(key);
+            if (property instanceof ObjectSchema && ((ObjectSchema) property).getProperties() != null
+                    && ((ObjectSchema) property).getProperties().size() > 0) {
 
-                ObjectProperty op = (ObjectProperty) property;
+                ObjectSchema op = (ObjectSchema) property;
 
                 String modelName = resolveModelName(op.getTitle(), path + "_" + key);
-                Model model = modelFromProperty(op, modelName);
+                Schema model = modelFromProperty(op, modelName);
 
                 String existing = matchGenerated(model);
 
@@ -300,18 +307,18 @@ public class InlineModelResolver {
                     propsToUpdate.put(key, refProperty);
                     modelsToAdd.put(modelName, model);
                     addGenerated(modelName, model);
-                    swagger.addDefinition(modelName, model);
+                    openapi.addDefinition(modelName, model);
                 }
-            } else if (property instanceof ArrayProperty) {
-                ArrayProperty ap = (ArrayProperty) property;
-                Property inner = ap.getItems();
+            } else if (property instanceof ArraySchema) {
+                ArraySchema ap = (ArraySchema) property;
+                Schema inner = ap.getItems();
 
-                if (inner instanceof ObjectProperty) {
-                    ObjectProperty op = (ObjectProperty) inner;
+                if (inner instanceof ObjectSchema) {
+                    ObjectSchema op = (ObjectSchema) inner;
                     if (op.getProperties() != null && op.getProperties().size() > 0) {
                         flattenProperties(op.getProperties(), path);
                         String modelName = resolveModelName(op.getTitle(), path + "_" + key);
-                        Model innerModel = modelFromProperty(op, modelName);
+                        Schema innerModel = modelFromProperty(op, modelName);
                         String existing = matchGenerated(innerModel);
                         if (existing != null) {
                             RefProperty refProperty = new RefProperty(existing);
@@ -322,20 +329,20 @@ public class InlineModelResolver {
                             refProperty.setRequired(op.getRequired());
                             ap.setItems(refProperty);
                             addGenerated(modelName, innerModel);
-                            swagger.addDefinition(modelName, innerModel);
+                            openapi.addDefinition(modelName, innerModel);
                         }
                     }
                 }
-            } else if (property instanceof MapProperty) {
-                MapProperty mp = (MapProperty) property;
-                Property inner = mp.getAdditionalProperties();
+            } else if (property instanceof MapSchema) {
+                MapSchema mp = (MapSchema) property;
+                Schema inner = mp.getAdditionalProperties();
 
-                if (inner instanceof ObjectProperty) {
-                    ObjectProperty op = (ObjectProperty) inner;
+                if (inner instanceof ObjectSchema) {
+                    ObjectSchema op = (ObjectSchema) inner;
                     if (op.getProperties() != null && op.getProperties().size() > 0) {
                         flattenProperties(op.getProperties(), path);
                         String modelName = resolveModelName(op.getTitle(), path + "_" + key);
-                        Model innerModel = modelFromProperty(op, modelName);
+                        Schema innerModel = modelFromProperty(op, modelName);
                         String existing = matchGenerated(innerModel);
                         if (existing != null) {
                             RefProperty refProperty = new RefProperty(existing);
@@ -346,7 +353,7 @@ public class InlineModelResolver {
                             refProperty.setRequired(op.getRequired());
                             mp.setAdditionalProperties(refProperty);
                             addGenerated(modelName, innerModel);
-                            swagger.addDefinition(modelName, innerModel);
+                            openapi.addDefinition(modelName, innerModel);
                         }
                     }
                 }
@@ -358,13 +365,13 @@ public class InlineModelResolver {
             }
         }
         for (String key : modelsToAdd.keySet()) {
-            swagger.addDefinition(key, modelsToAdd.get(key));
+            openapi.addDefinition(key, modelsToAdd.get(key));
             this.addedModels.put(key, modelsToAdd.get(key));
         }
     }
 
     @SuppressWarnings("static-method")
-    public Model modelFromProperty(ArrayProperty object, @SuppressWarnings("unused") String path) {
+    public Schema modelFromProperty(ArraySchema object, @SuppressWarnings("unused") String path) {
         String description = object.getDescription();
         String example = null;
 
@@ -373,8 +380,8 @@ public class InlineModelResolver {
             example = obj.toString();
         }
 
-        Property inner = object.getItems();
-        if (inner instanceof ObjectProperty) {
+        Schema inner = object.getItems();
+        if (inner instanceof ObjectSchema) {
             ArrayModel model = new ArrayModel();
             model.setDescription(description);
             model.setExample(example);
@@ -385,7 +392,7 @@ public class InlineModelResolver {
         return null;
     }
 
-    public Model modelFromProperty(ObjectProperty object, String path) {
+    public Schema modelFromProperty(ObjectSchema object, String path) {
         String description = object.getDescription();
         String example = null;
 
@@ -395,9 +402,9 @@ public class InlineModelResolver {
         }
         String name = object.getName();
         Xml xml = object.getXml();
-        Map<String, Property> properties = object.getProperties();
+        Map<String, Schema> properties = object.getProperties();
 
-        ModelImpl model = new ModelImpl();
+        Schema model = new Schema();
         model.setDescription(description);
         model.setExample(example);
         model.setName(name);
@@ -412,7 +419,7 @@ public class InlineModelResolver {
     }
 
     @SuppressWarnings("static-method")
-    public Model modelFromProperty(MapProperty object, @SuppressWarnings("unused") String path) {
+    public Schema modelFromProperty(MapSchema object, @SuppressWarnings("unused") String path) {
         String description = object.getDescription();
         String example = null;
 
@@ -433,22 +440,22 @@ public class InlineModelResolver {
      * Make a RefProperty
      *
      * @param ref new property name
-     * @param property Property
-     * @return {@link Property} A constructed Swagger property
+     * @param property Schema
+     * @return {@link Schema} A constructed OpenAPI property
      */
-    public Property makeRefProperty(String ref, Property property) {
+    public Schema makeRefProperty(String ref, Schema property) {
         RefProperty newProperty = new RefProperty(ref);
         this.copyVendorExtensions(property, newProperty);
         return newProperty;
     }
 
     /**
-     * Copy vendor extensions from Property to another Property
+     * Copy vendor extensions from Schema to another Schema
      *
      * @param source source property
      * @param target target property
      */
-    public void copyVendorExtensions(Property source, AbstractProperty target) {
+    public void copyVendorExtensions(Schema source, Schema target) {
         Map<String, Object> vendorExtensions = source.getVendorExtensions();
         for (String extName : vendorExtensions.keySet()) {
             target.setVendorExtension(extName, vendorExtensions.get(extName));
