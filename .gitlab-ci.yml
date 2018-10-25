@@ -73,7 +73,9 @@ release_tag:
   stage: release
   <<: *docker
   only:
-    - tags
+    - /^.*-metaswitch$/
+  except:
+    - branches
   script:
     - docker pull $TMP_BRANCH_IMAGE_NAME
     - docker tag $TMP_BRANCH_IMAGE_NAME $ART_TAG_BASE_IMAGE_NAME
