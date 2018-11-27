@@ -281,9 +281,7 @@ where
 
                                                     response.headers_mut().set(ContentType(mimetypes::responses::FILE_RESPONSE_GET_SUCCESS.clone()));
 
-
                                                     let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
-
                                                     response.set_body(body);
                                                 },
                                             },
@@ -354,7 +352,6 @@ where
 
                                                     response.headers_mut().set(ContentType(mimetypes::responses::HTML_POST_SUCCESS.clone()));
 
-
                                                     response.set_body(body);
                                                 },
                                             },
@@ -409,9 +406,7 @@ where
 
                                                     response.headers_mut().set(ContentType(mimetypes::responses::RAW_JSON_GET_SUCCESS.clone()));
 
-
                                                     let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
-
                                                     response.set_body(body);
                                                 },
                                             },
