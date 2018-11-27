@@ -628,18 +628,6 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
                         rsp.dataType = "serde_json::Value";
                     }
                 }
-
-                Schema response = (Schema) rsp.schema;
-                // Check whether we're returning an object with a defined XML namespace.
-                if (response != null && (!StringUtils.isEmpty(response.get$ref()))) {
-                    Schema model = definitions.get(ModelUtils.getSimpleRef(response.get$ref()));
-                    if ((model != null)) {
-                        XML xml = model.getXml();
-                        if ((xml != null) && (xml.getNamespace() != null)) {
-                            rsp.vendorExtensions.put("has_namespace", "true");
-                        }
-                    }
-                }
             }
             for (CodegenProperty header : rsp.headers) {
                 if (header.dataType.equals("uuid::Uuid")) {
@@ -1065,23 +1053,6 @@ public class RustServerCodegen extends DefaultCodegen implements CodegenConfig {
         }
         return super.postProcessModelsEnum(objs);
     }
-
-    // private boolean paramHasXmlNamespace(CodegenParameter param, Map<String, Schema> definitions) {
-    //     Object refName = param.vendorExtensions.get("refName");
-
-    //     if ((refName != null) && (refName instanceof String)) {
-    //         String name = (String) refName;
-    //         Schema model = definitions.get(ModelUtils.getSimpleRef(name));
-
-    //         if (model != null) {
-    //             XML xml = model.getXml();
-    //             if ((xml != null) && (xml.getNamespace() != null)) {
-    //                 return true;
-    //             }
-    //         }
-    //     }
-    //     return false;
-    // }
 
     private void processParam(CodegenParameter param, CodegenOperation op) {
         String example = null;
