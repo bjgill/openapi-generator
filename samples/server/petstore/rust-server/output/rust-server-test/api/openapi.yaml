@@ -111,6 +111,12 @@ components:
       required:
       - id
       type: object
+    XmlObject:
+      description: An XML object
+      type: string
+      xml:
+        name: an_xml_object
+        namespace: foo.bar
     ObjectOfObjects_inner:
       properties:
         optional_thing:
